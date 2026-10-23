@@ -1,93 +1,37 @@
-# Security boundaries — Phase 1
+# Security and privacy boundaries — v0.2 beta
 
-## Credential handling
+## Local credentials and data
 
-Production uses PBKDF2-HMAC-SHA256 with 210,000 iterations and a fresh 16-byte salt
-per credential change. Store only algorithm/version, salt and 32-byte derived
-key. Compare all digest bytes without an early exit. Real hashing tests exercise
-correct and incorrect inputs and random salt independence. Fast fake hashers
-are confined to service/widget tests.
+PINs use PBKDF2-HMAC-SHA256, 210,000 iterations, a fresh 16-byte salt and a 32-byte derived key. Digest comparison has no early byte exit. Both defaults must be replaced; child/profile PINs must be unique and cannot authorize parent actions. Four-digit PINs remain low entropy; choose longer private PINs and benchmark hashing on low-end hardware before release.
 
-The iteration count is an initial performance/security choice, not a claim of
-meeting every current password-hashing guideline. Before release, benchmark
-supported low-end phones, increase work factor where practical, and implement
-explicit hash migration when parameters change. A four-digit PIN has only
-10,000 possibilities; encourage longer PINs. Keystore-backed encryption and app
-lockout do not turn short PINs into high-entropy passwords.
+Kotlin keeps separate PIN and family records in AES-256-GCM Android Keystore vaults, with authenticated package/schema data and fresh provider-generated nonces. AtomicFile, file-descriptor sync and readback precede a success acknowledgement. Disk/crypto work is serialized off the UI thread. Missing keys, corrupt envelopes and failed persistence fail closed. Hardware-backed Keystore depends on the phone. Android backup/device transfer is disabled; clearing storage/uninstall loses local credentials/data. No secret reset PIN exists. Rooted or compromised operating systems are outside the threat model.
 
-The small Kotlin vault encrypts one JSON record with AES-256-GCM and a
-non-exportable Android Keystore key, bound to the package/schema with additional
-authenticated data. Each write uses a fresh provider-generated 96-bit nonce.
-The record contains both hashes, schema version, retry count, lockout deadline
-and last observed wall time. Native AtomicFile plus explicit file-descriptor
-sync and readback ensure a write is acknowledged only after durable persistence.
-Crypto and disk IO run on a serial native executor. Missing keys, missing data
-with a surviving key, authentication-tag failure and corrupt envelopes fail
-closed. Hardware backing is used when supplied by Android, not guaranteed. Failed storage reads/writes do
-not authorize a session. Malformed records are never silently reset. Backups
-and device transfers are disabled to avoid moving encrypted data without keys.
-Verify those guarantees on target OEMs; rooted/compromised OSes are unsupported.
+Five wrong challenges persist a shared five-minute lockout. Correct PINs cannot bypass it. A recorded clock floor resists simple backward clock changes; moving wall time forward can expire lockout, and changing date/time can affect daily limits. Ordinary app privileges do not provide trusted time across reboot. Parent sessions expire on focus loss/background/screen off. Pending unlocks cannot restore a parent screen after backgrounding. Native parent-approved external settings/app/picker sessions are authorized only for that external trip and relock on return. FLAG_SECURE blocks ordinary screenshots/recents previews, not cameras or a compromised OS.
 
-Five wrong attempts set a persisted five-minute deadline and reset the attempt
-counter for the next window. Valid PINs do not bypass an active deadline. Both
-roles share the counter so switching roles cannot bypass it. Attempt processing
-is serialized. Failed parent-only challenges count even when a valid child PIN
-is supplied. The clock floor prevents simple backward clock movement from
-shortening a deadline. Moving the wall clock forward can expire a lockout;
-secure time across reboot is not provided by ordinary Android app privileges.
+Tasks/progress are local first. Writes clone then persist before changing visible state; completion is idempotent and uses canonical task rewards. Thirty days of detailed local progress are retained, with all-time points preserved. Drawings are bounded and the latest drawing per child is local only. Learning time gates cover in-app foreground games/stories/video, not total device usage, learning exercises, calls, or external apps. Per-second encrypted writes and battery impact need physical-device measurement.
 
-Credential replacement reauthenticates the parent and atomically writes both
-replacement hashes at the encrypted-record boundary. Abrupt hardware power loss
-is still subject to the device filesystem guarantees. Flutter and native parent
-sessions are memory-only. Focus loss, backgrounding, process death or screen-off lifecycle
-transitions remove authorization. Pending async work cannot reopen a parent
-screen after a background transition. `FLAG_SECURE` suppresses normal screenshots
-and recents previews; it does not defeat cameras or a compromised OS.
+## Android enforcement limits
 
-## Android constraints
+The launcher is not Android keyguard. Accessibility observes package transitions and tries to return Home for other apps while child mode is active. It does not read screen text, retrieve window content, inject gestures, log browsing, or transmit package events. A trusted input keyboard and system/emergency UI remain available. Keyboard GIF/search/settings surfaces, notifications, recents, system dialogs, OEM races, boot transitions and service crashes can expose escape paths. This is best effort, not managed kiosk containment or device-wide adult-content filtering.
 
-- Home selection changes where the Home gesture/button leads. It does not
-  replace Android keyguard, block recents or prevent notification interactions.
-- Device Admin is a legacy user-granted API. Android may require deactivation
-  before uninstalling, but a user can deactivate it. No wipe, password or remote
-  lock policies are requested. No Device Owner or ADB workflow is used.
-- Accessibility in Phase 1 is deliberately inert. It has no window-content
-  access, gesture injection, logging or networking. It must not be advertised as
-  an accessibility tool for disabled users. Future enforcement needs a separate
-  prominent disclosure, policy review and real-device tests.
-- Even a later Accessibility blocker is best effort: race conditions, crashes,
-  OEM behavior, system dialogs, restricted settings and revocations remain.
-- Overlays can be suppressed on sensitive system surfaces. They cannot secure
-  Android Settings or system dialogs, and can conflict with permission prompts.
-- Usage Access does not automatically enforce time limits or guarantee accurate
-  foreground accounting. Phase 1 does not query usage events.
-- Safe mode, clearing storage, uninstalling, factory reset, rooted devices,
-  alternative boot environments, emergency UI and system settings cannot be
-  reliably contained with these user-granted permissions.
-- Sideloaded apps on newer Android versions may require the parent to explicitly
-  allow restricted settings before enabling Accessibility. Explain OS prompts;
-  never attempt to bypass them.
+Device Admin can be deactivated; Accessibility and Home grants can be revoked. Safe mode, settings, data clearing, uninstall, factory reset and modified devices cannot be reliably contained. Sideloaded restricted-settings prompts require the parent to follow Android's own instructions. Do not bypass those controls. No ADB/Device Owner workflow is required or used. Overlay and Usage Access screens are optional status/guidance; this build neither draws blocking overlays nor collects other apps' usage history. Missing/revoked grants show a warning. Granting everything cannot remove OS limitations.
 
-There is no promise that granting all permissions makes every requested feature
-work. Unsurmountable platform limits must remain visible in onboarding and store
-copy. True managed kiosk guarantees require a different enrollment model, which
-the requested no-Device-Owner design excludes.
+The media player accepts parent-reviewed direct HTTPS MP4 links, with no public feed, browser, comments, autoplay or loop. It does not inspect or guarantee a host's future content. YouTube/channel embeds and a global network/web filter are not implemented. No anti-Shorts keyword filter can substitute for content approval.
 
-## Privacy and future cloud work
+## Online identity and authorization
 
-Phase 1 sends no application data to Firebase and has no analytics or advertising
-SDK. The package visibility query lists launchable apps only; it does not request
-`QUERY_ALL_PACKAGES`. No child profile data, content, location, contacts, camera
-or microphone is collected. Native services do not transmit data.
+Production online features require explicit Firebase configuration; the public beta has none. Email-verified parent accounts call a trusted registration function. Parent ownership is Auth UID plus a server-owned active account record. Email verification is not proof of legal guardianship. Child phones use anonymous identities and server-created scoped device links. PINs and their hashes are never uploaded. One-time random pairing codes expire after ten minutes; five redemption attempts per device per ten minutes are enforced server-side. Pairing a replacement invalidates the old device link. Reinstall/anonymous-account abuse needs further App Check and operational rate limiting before production.
 
-Parental consent is local and informational, not verified legal identity.
-Before child cloud data is added, define legal basis/guardian verification by
-region and age, family pairing, least privilege, account/data deletion, retention,
-processor agreements, encryption, breach procedures and parental export rights.
-Do not claim COPPA/GDPR-K compliance from a checkbox or Firebase security rules.
+Firestore rules isolate families and child profiles, prevent child configuration/role writes, bound progress fields, require monotonic progress and protect private pairing/push collections. Storage permits only owner advertising uploads with matching metadata, permitted MIME type and a 20 MB maximum. MIME metadata is not a malware/content scan. Shared download-token URLs are public to their holders. Do not upload private child pictures as ads.
 
-Future cloud code must never store plaintext PINs or their hashes in Firestore.
-Device PIN authorization is distinct from Firebase parent identity. A child's
-paired device must not possess unrestricted parental credentials. Family IDs,
-notification payloads, server timestamps and replay/abuse controls need tested
-authorization semantics. No permissive development rules may reach production.
+A persisted local outbox replays child progress after reconnect; acknowledgements clear only unchanged snapshots. Failed sync retries, while local learning continues. Streams and writes use session boundaries to avoid crossing account switches. FCM is a generic refresh hint with no child names; Firestore is the source of truth. Notifications can be delayed/dropped. Local copies remain usable after online device revocation, so revocation is not remote erasure. Multiple simultaneous parent-phone edits use last-write-wins configuration; no collaborative editor is provided.
+
+Deleting the account requires recent password reauthentication, disables the server parent record, removes online family records/pairing/device/push data and deletes Auth identity. A minimal inactive tombstone prevents queued writes reopening a deleted account. Local copies on other phones need deletion on those phones; retention, export, recovery and verified guardian processes need operator/legal review. The beta does not automatically expire old cloud progress/request documents. Configure and disclose cloud retention before production.
+
+## Advertising and privacy
+
+No analytics SDK, camera, microphone, contacts or location feature is added. TTS uses installed offline voices only. Firebase Auth/Firestore/FCM/Storage and Google Mobile Ads SDKs are present in source; cloud/network initialization is gated by configuration and account setup. Android may initialize SDK providers when configured; audit the final configured artifact's network behavior. Approved media connects to its host. This is not a claim of zero operating-system network traffic.
+
+Ads start disabled, require a server-owned owner toggle and each guardian's per-child consent, and are hidden without current server config. AdMob requests are tagged child-directed/under-consent, nonpersonalized and maximum rating G; production IDs and policy approval are still required. No ad viewing is required to learn. Remote ad disabling requires connectivity; it is not an instantaneous offline kill switch. Review child-directed SDK/Families eligibility and external provider behavior before enabling live ads.
+
+Local consent screens inform parents but do not establish COPPA/GDPR-K compliance. Before public child-data processing: verify legal basis/guardian flow by region, publish an accurate hosted privacy policy, define data retention/export/deletion and incident handling, review processors and ads, enable abuse controls, and test real devices. No compliance certification or absolute protection is claimed.

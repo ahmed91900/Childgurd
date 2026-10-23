@@ -4,9 +4,13 @@ import 'package:flutter/services.dart';
 import '../../../l10n/strings.dart';
 
 String normalizePin(String value) =>
-    value.replaceAllMapped(RegExp('[٠-٩۰-۹]'), (m) {
+    value.replaceAllMapped(RegExp('[٠-٩۰-۹০-৯]'), (m) {
       final code = m[0]!.codeUnitAt(0);
-      return '${code >= 0x6f0 ? code - 0x6f0 : code - 0x660}';
+      return '${code >= 0x9e6
+          ? code - 0x9e6
+          : code >= 0x6f0
+          ? code - 0x6f0
+          : code - 0x660}';
     });
 
 class PinField extends StatelessWidget {

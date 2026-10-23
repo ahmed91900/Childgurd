@@ -8,6 +8,7 @@ import 'package:kidsafe_launcher/core/providers.dart';
 import 'package:kidsafe_launcher/features/access/domain/access_service.dart';
 import 'package:kidsafe_launcher/features/access/presentation/pin_form.dart';
 import 'package:kidsafe_launcher/main.dart';
+import 'package:kidsafe_launcher/features/family/data/family_repository.dart';
 
 import 'access_service_test.dart' show MemoryVault, FakeHasher;
 
@@ -58,9 +59,14 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final family = FamilyRepository(MemoryVault());
+    await family.load();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [accessProvider.overrideWithValue(access)],
+        overrides: [
+          accessProvider.overrideWithValue(access),
+          familyProvider.overrideWith((ref) => family),
+        ],
         child: const KidSafeApp(),
       ),
     );
@@ -155,6 +161,8 @@ void main() {
     tester,
   ) async {
     await mount(tester);
+    await tester.tap(find.byIcon(Icons.language));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('العربية'));
     await tester.pumpAndSettle();
     final text = find.text('بداية أكثر أماناً، معاً');

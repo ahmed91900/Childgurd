@@ -1,0 +1,4 @@
+{"indexes":[],"fieldOverrides":[
+  {"collectionGroup":"progress","fieldPath":"family","indexes":[{"order":"ASCENDING","queryScope":"COLLECTION_GROUP"}]},
+  {"collectionGroup":"requests","fieldPath":"family","indexes":[{"order":"ASCENDING","queryScope":"COLLECTION_GROUP"}]}
+]}

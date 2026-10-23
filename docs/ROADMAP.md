@@ -1,29 +1,15 @@
-# KidSafe Launcher roadmap
+# Current scope and remaining release work
 
-The project progresses through reviewed phases. Planned items are not features
-of the current build. App implementation waits for the owner's next instruction.
+v0.2 beta includes offline family learning, nine activity types, English/Bangla alphabet lessons and original stories, local parental tasks/rewards/time controls, secure profile PINs, Android setup and best-effort app redirection. Firebase parent/child pairing, progress/assignment sync, trusted push functions and owner-controlled ads are implemented and emulator-tested.
 
-| Phase | Scope | Status |
-| --- | --- | --- |
-| 1 | Project architecture, PINs, launcher shell, permission wizard, English/Arabic | Implemented; automated validation recorded; device checks pending |
-| 2 | Parent accounts, profiles, authenticated family/device pairing, local-first tasks | Planned; exact slice to be agreed |
-| 3 | Original learning tasks, difficulty, completion logic and rewards | Planned |
-| 4 | Parent-approved learning media, task gates and daily limits | Planned |
-| 5 | Remote assignments, schedules, time requests, Firestore sync and FCM | Planned |
-| 6 | Best-effort Android restrictions, device validation and release hardening | Planned |
+Before a production release:
 
-## Gates for future work
+- Supply and deploy the owner's Firebase project; build the configured connected APK and validate two actual phones, push delivery, reconnect and revocation.
+- Complete the physical-device/OEM escape, battery, accessibility, offline TTS and low-end performance matrix.
+- Configure durable private release signing and validate a signed AAB, target API and native 16 KB compatibility.
+- Complete Accessibility declaration, Families/advertising SDK review, hosted privacy policy, guardian/retention/export/support processes and the Play checklist.
+- Review cloud retention and abuse controls, add App Check/operational limits, benchmark per-second persistence and content-review workflows.
 
-- Cloud access needs authenticated family ownership, paired-device privileges
-  and emulator-tested rules. The current Firebase baseline denies all clients.
-- Task completion and rewards need offline behavior, idempotency and meaningful
-  unit tests before remote synchronization.
-- Learning media needs content-source, allowlisting, privacy and playback-policy
-  decisions before a provider is integrated.
-- Android restrictions need prominent consent, policy review, physical-device
-  tests and visible limitations. User-granted permissions cannot promise kiosk
-  containment or uninstall-proof protection.
-- Production distribution needs guardian/privacy review, signed release builds,
-  a support process and the [release checklist](PLAY_RELEASE_CHECKLIST.md).
+Not currently implemented: device-wide adult-content/network filtering, guaranteed kiosk containment, YouTube/channel embeds, offline video downloading, a general allowed-external-app editor for child mode, downloadable/bundled narration, arbitrary multi-device collaborative configuration, remote erasure of offline copies, or monetization activated without owner configuration. Parent mode can launch normal phone apps; child mode exposes only KidSafe and necessary trusted system/keyboard surfaces.
 
-See [Phase 1 evidence](PHASE1_VALIDATION.md) for what has actually been verified.
+The [Phase 1 report](PHASE1_VALIDATION.md) is historical. See [current validation](VALIDATION.md) for v0.2 evidence.

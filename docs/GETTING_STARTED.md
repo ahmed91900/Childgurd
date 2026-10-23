@@ -1,167 +1,54 @@
-# Development and first-run setup
+# KidSafe Launcher v0.2 beta setup
 
-Android-only Flutter foundation for a parent-controlled launcher. This phase is
-**not ready for unsupervised child protection or Play Store release**. It does not
-yet restrict other apps. No ADB or Device Owner enrollment is needed by parents.
-Developer build/install tooling is separate from the parent's setup workflow.
+## Download and installation
 
-## Implemented
+Download `KidSafe-Launcher-arm64-beta.apk` from [GitHub Releases](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.0-beta.1). Android 8.0+ and ARM64 are required. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
 
-- First-run guardian consent and privacy/Android-limit disclosures.
-- Mandatory replacement of **both** bootstrap PINs: parent `1020`, child `0000`.
-  Neither default may be reused for either role. PINs must differ and contain
-  4–12 digits. Arabic and Persian numerals normalize to ASCII.
-- PBKDF2-HMAC-SHA256, 210,000 iterations, independent cryptographically random
-  128-bit salts, 256-bit outputs, fixed-length comparison. Hashing runs off the
-  UI isolate. PINs are never logged or sent to a server.
-- AES-256-GCM encrypted storage with a non-exportable Android Keystore key.
-  Credential and retry state share one atomically written, disk-synced record.
-- Five wrong attempts cause a five-minute lockout, including during initial setup
-  and credential changes. Counters/deadlines persist across process restarts.
-- Parent PIN opens an installed-app list. Child PIN opens the original four-card
-  Kids Mode foundation. Child PIN cannot authorize a Kids Mode exit or PIN change.
-- Default Home, Device Admin, Accessibility, overlay and Usage Access settings
-  links, real status checks, foreground polling, and refresh on resume.
-- Parent sessions relock on focus loss or backgrounding. Screenshots/recents thumbnails are
-  protected using `FLAG_SECURE`. Android cloud backup/device transfer are disabled.
-- English/Arabic, automatic system locale selection, explicit language switch,
-  RTL, scalable text, scrollable layouts and large primary touch targets.
+Open the APK from Downloads. Android may ask you to allow installation from the browser/file manager. That grant only allows installation; it is separate from KidSafe's permissions. Do not disable Play Protect. Keep an alternative launcher available during testing.
 
-The task/video/game/reward cards deliberately say **Coming in a later phase**.
-Accessibility is a status-only service; it collects no screen content and blocks
-no apps. Usage history and overlays are not consumed yet. Grants do not activate
-features that have not been built.
+## First run
 
-## Structure
+1. Choose English, বাংলা or العربية from the language menu. Arabic uses RTL.
+2. Read the privacy policy and parental consent. These disclosures do not independently verify legal guardianship.
+3. Enter initial parent PIN `1020`. Choose two different PINs of 4–12 digits and confirm each. Neither `1020` nor `0000` may be retained. Longer private PINs are better.
+4. Work through Android settings below. Returning from an external screen locks the parent space; enter the new parent PIN again. A child PIN never authorizes the parent dashboard.
+5. Complete setup even if an optional permission is unavailable. Missing/revoked permissions are visible; do not rely on restrictions when required grants are absent.
 
-```text
-lib/
-  main.dart                              # Composition root and theme
-  core/providers.dart                    # Riverpod dependency injection
-  l10n/strings.dart                       # Complete English and Arabic strings
-  features/access/
-    domain/access_service.dart           # Pure Dart PIN/lockout policy
-    data/secure_access.dart              # PBKDF2 and native vault adapters
-    presentation/launcher_shell.dart     # Session lifecycle and mode routing
-    presentation/pin_form.dart           # PIN entry, replacement and normalization
-  features/setup/
-    data/android_launcher.dart           # Typed method-channel boundary
-    presentation/permission_wizard.dart   # Permission/status wizard
-android/                                 # Kotlin launcher/permission adapters
-test/                                    # Domain, real crypto and widget tests
-docs/                                    # Security, device checks and release guide
-tool/                                    # Cloud tooling and full-source export
-```
+| Setting | Purpose and limit |
+| --- | --- |
+| Default Home | Choose KidSafe as Home. Android's system screen lock stays independent. |
+| Device Admin | Android commonly requires deactivation before uninstall; the user can deactivate it. No wipe policy is requested. |
+| Accessibility | Read the prominent disclosure and explicitly consent before opening Android's enable screen. Package changes trigger best-effort return Home in child mode. No screen text is read. Sideloaded apps may need Android's “Allow restricted settings” option in App info before this can be enabled. Follow the OS instructions. |
+| Display over apps | Optional status/guidance; this build does not use overlays for blocking. |
+| Usage Access | Optional status/guidance; this build measures its own play/media time and does not inspect other apps' usage history. |
+| Notifications | Requested only when setting up cloud pairing/account sync; declining does not prevent offline lessons. |
 
-## Build on your own computer
+## Parent dashboard
 
-1. Install Flutter **3.35.7** (Dart **3.9.2**), Git, Android Studio and JDK 17 or
-   21. This SDK pin is intentional; upgrade it in a separately tested change.
-2. In Android Studio's SDK Manager install Android API **36**, build tools
-   **35.0.0**, command-line tools and platform tools. Gradle may request an NDK
-   or CMake version used by plugins; let the official SDK Manager install it.
-3. Run `flutter doctor -v` and accept the Android SDK licenses after reviewing
-   Google's terms: `flutter doctor --android-licenses`.
-4. In the repository root:
+Set the child's nickname, age, difficulty, daily play/video/story minutes, required tasks and enabled activity types, then save. Create scheduled custom questions with an answer, start date and deadline. Task library items can be toggled individually. Additional child profiles require a unique child PIN and the current parent PIN. The default child uses the child PIN set at first run.
 
-   ```sh
-   flutter pub get --enforce-lockfile
-   flutter analyze
-   flutter test --reporter expanded
-   flutter build apk --debug --target-platform android-arm64
-   ```
+The dashboard shows today's completed tasks, points and foreground media time, plus weekly totals. Stars represent virtual points; there are no purchases. A more-time request grants ten minutes only after a parent approves it, once for that request/date. The daily allowance is shared between games, stories and videos; open learning tasks and alphabet exercises remain available.
 
-5. Debug APK: `build/app/outputs/flutter-apk/app-debug.apk`. Use Android Studio
-   or transfer this APK to your test phone and approve the install. A physical
-   phone does not need ADB or Device Owner enrollment to use the setup wizard.
-   Do not distribute a debug build as a production release.
-6. For a developer-connected phone/emulator, `flutter run` is also supported.
-   API 26 is the minimum supported OS; the supplied APK targets ARM64. Omit
-   `--target-platform` for Flutter's default multi-ABI debug build.
+Approve direct HTTPS MP4 files you have reviewed and have permission to use. YouTube/channel URLs, Shorts feeds and browsers are not embedded. Video is online-only in this version. Remote sources can change content: periodically review them.
 
-`android/local.properties` is generated locally; never commit SDK paths or keys.
-The Gradle distribution has a pinned SHA-256. Release signing is intentionally
-absent. No release build uses debug signing credentials.
+For narration install English/Bangla offline voice data in Android's text-to-speech settings, then use Listen. Voice availability varies by device; no voice pack is bundled. The parent dashboard links to the system voice settings.
 
-## In this cloud environment
+## Same phone and separate phones
 
-Use the existing isolated checkout; do not create a Git worktree.
+Same-phone profiles, tasks, rewards, requests and time settings work offline. No account is required.
 
-```sh
-cd /workspace/Childgurd
-source tool/cloud-env.sh
-flutter analyze
-flutter test --reporter expanded
-flutter build apk --debug --target-platform android-arm64
-```
+Separate-phone assignment/progress and global advertising need a Firebase-configured APK and deployed backend. The public beta intentionally has no production project configured. Follow [FIREBASE_SETUP.md](FIREBASE_SETUP.md) to build that edition. Pairing uses a short-lived private code, not the parent PIN. Don't share pairing codes publicly. One child profile has one active paired phone; pairing a replacement revokes the earlier phone's online access. Revocation does not erase its previously downloaded offline data or turn the phone into a managed kiosk.
 
-`bash tool/cloud-install.sh` refreshes the pinned dependencies and tooling. The
-script uses only official HTTPS sources, verifies downloaded checksums and keeps
-caches under `/workspace`. Java networking uses the existing platform proxy, not
-embedded credentials. Internet destinations needed: `github.com`,
-`raw.githubusercontent.com`, `release-assets.githubusercontent.com`, `pub.dev`,
-`storage.googleapis.com`, `services.gradle.org`, `downloads.gradle.org`,
-`plugins.gradle.org`, `plugins-artifacts.gradle.org`, `repo.maven.apache.org`,
-`dl.google.com` and `maven.google.com` (if a redirect uses it).
+## Ads
 
-Some Dart tools also write fixed home paths `.dart-tool` and `.dartServer`;
-the Android debug signer may use `.android`. These are local development state,
-not app data. No phone or emulator is assumed to be connected to the cloud.
+Ads are off by default. After Firebase activation, the app owner can turn them on/off and select AdMob, an original image, or an MP4. A guardian must also opt in for each child. Manual ads have no external click link; video requires play and shares the child's play allowance. Changing global settings requires an authenticated `owner` claim, never a client-editable role. Image/video uploads accept at most 20 MB. Upload only public advertising material: download URLs can be shared. After the picker, unlock with the parent PIN again, upload the chosen file, then save the ad settings.
 
-## First-run guide
+## Recovery and uninstall
 
-1. Read **Privacy & Android limits**. Confirm that you are the guardian and
-   consent to local credential storage. This checkbox is a local disclosure,
-   not legally verified parental identity or a compliance certification.
-2. Enter current parent PIN `1020`. Set and confirm a new parent PIN and a
-   different new child PIN. Both defaults must be replaced. Prefer 6–12 digits.
-   The initial child PIN `0000` cannot unlock modes during first setup.
-3. Open each Android permission screen from the wizard. Choose KidSafe as Home;
-   activate Device Admin; review the Accessibility disclosure before enabling;
-   grant overlay and Usage Access. Names/locations differ across OEMs.
-4. Returning from a settings screen relocks the launcher. Enter the **new**
-   parent PIN, open **Prepare this Android phone**, and continue with the next
-   permission. The status screen always reflects current Android grants.
-5. Phase 1 permits continuing with missing grants so you can inspect/test the
-   foundation. It displays a warning. No combination of grants makes this phase
-   safe for unsupervised use. Accessibility is optional until enforcement exists.
-6. In parent space, open installed launchable apps, inspect permissions, change
-   PINs (requires the current parent PIN again), or lock the launcher.
-7. On the launcher lock screen, the new child PIN opens Kids Mode. **Parent
-   access** requires the parent PIN; the child PIN counts as a wrong attempt.
+Five incorrect attempts lock all PIN routes for five minutes, including after restarting the app. Keep the parent PIN private; there is no hidden master PIN or remote PIN upload. Android wall-clock manipulation can affect lockout/daily limits, so protect device settings separately.
 
-Revocations are checked while foregrounded every ten seconds and immediately on
-resume. Notifications while this app is not running are outside Phase 1.
+To stop testing, enter parent mode, choose another Home launcher in Android settings, deactivate KidSafe Device Admin, revoke Accessibility, and uninstall normally. If the parent PIN is lost, Android settings/data clearing may be necessary and will erase local data. This app is not uninstall-proof. Never rely on it as the only way to access emergency functions.
 
-## Limits and recovery
+## Local development
 
-This is a launcher, **not Android's system keyguard**. Configure the system screen
-lock too. Neither Device Admin nor Accessibility provides an uninstall-proof or
-inescapable kiosk. See [security boundaries](SECURITY.md).
-
-There is no secret recovery PIN. If credentials are forgotten, Android-level
-deactivation/uninstall/data clearing can reset local setup; those mechanisms
-also show why this architecture cannot promise child-proof containment. Device
-clock changes can affect wall-clock lockout. Hardware-level credential extraction
-and compromised/rooted devices are outside its protection.
-
-## Remaining phases
-
-1. **Current:** project, PIN security, launcher shell and permission wizard.
-2. Proposed after your `next`: agree the next slice, then implement parent/child
-   profiles, authenticated Firebase family pairing and offline task persistence,
-   with Firestore rules/emulator tests before enabling remote reads or writes.
-3. Task engine, original age-based content, rewards and their unit tests.
-4. Parent-approved learning media, content gating and enforceable timer scope.
-5. Remote schedules, time requests, push delivery and conflict handling.
-6. Best-effort Android restrictions, real-device adversarial testing, accessibility
-   policy review, privacy review and signed release hardening.
-
-Firebase Auth/Firestore/FCM are intentionally **not initialized in Phase 1**.
-No credentials are needed for local PIN setup. The checked-in Firebase rules deny
-all access until authenticated ownership rules and tests are built. See
-[Firebase preparation](FIREBASE_SETUP.md), [device validation](DEVICE_TESTS.md)
-and [Play release checklist](PLAY_RELEASE_CHECKLIST.md).
-
-To read every file in one document, run `python3 tool/export_source.py` and open
-`docs/FULL_SOURCE.md` in the repository root. It contains full file contents, without code excerpts.
+Install Flutter 3.35.7, JDK 21 and Android SDK platform 36, build-tools 35.0.0, platform-tools, NDK 27.0.12077973 and CMake 3.22.1. Accept Android SDK licenses through the official SDK tools. Run the build/check commands in the repository README. `tool/cloud-env.sh` contains paths for this workspace only; use your own SDK/JDK locations elsewhere. Release signing must be configured privately before Store distribution.

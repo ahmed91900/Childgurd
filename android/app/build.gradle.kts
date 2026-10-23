@@ -1,7 +1,17 @@
+import java.util.Base64
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
+}
+val dartDefines = (project.findProperty("dart-defines") as? String).orEmpty()
+    .split(',').filter { it.isNotBlank() }.mapNotNull {
+        val value = String(Base64.getDecoder().decode(it), Charsets.UTF_8)
+        val index = value.indexOf('=')
+        if (index < 0) null else value.substring(0, index) to value.substring(index + 1)
+    }.toMap()
+val firebaseValues = dartDefines["FIREBASE_CONFIG"]?.takeIf { it.isNotBlank() }?.let {
+    groovy.json.JsonSlurper().parseText(it) as Map<*, *>
 }
 android {
     namespace = "com.kidsafe.launcher"
@@ -18,6 +28,14 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = dartDefines["ADMOB_APP_ID"]
+            ?: "ca-app-pub-3940256099942544~3347511713"
+        if (firebaseValues != null) {
+            mapOf("appId" to "google_app_id", "messagingSenderId" to "gcm_defaultSenderId",
+                "apiKey" to "google_api_key", "projectId" to "project_id").forEach { (key, resource) ->
+                resValue("string", resource, requireNotNull(firebaseValues[key]).toString())
+            }
+        }
     }
     // Release signing must be supplied privately before Play distribution.
     // No release build is signed with debug keys.

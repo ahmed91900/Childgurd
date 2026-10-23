@@ -16,11 +16,12 @@ import javax.crypto.spec.GCMParameterSpec
  * AtomicFile.finishWrite syncs the encrypted file before acknowledging success.
  * The key stays in Android Keystore; no keys or raw PINs cross this API.
  */
-class SecurePinVault(context: Context) {
-    private val alias = "kidsafe.pin.v1"
-    private val base = File(context.noBackupFilesDir, "pin-vault.v1")
+class SecurePinVault(context: Context, private val family: Boolean = false) {
+    private val alias = if (family) "kidsafe.family.v1" else "kidsafe.pin.v1"
+    private val base = File(context.noBackupFilesDir, if (family) "family-vault.v1" else "pin-vault.v1")
     private val file = AtomicFile(base)
-    private val aad = "${context.packageName}:pin-vault:v1".toByteArray(Charsets.UTF_8)
+    private val aad = (if (family) "${context.packageName}:family-vault:v1" else "${context.packageName}:pin-vault:v1").toByteArray(Charsets.UTF_8)
+    private val maxSize = if (family) 1048576 else 60000
     private val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
 
     private fun key(create: Boolean): SecretKey {
@@ -47,7 +48,7 @@ class SecurePinVault(context: Context) {
             return null
         }
         val bytes = file.readFully()
-        if (bytes.size !in 30..65536 || bytes[0] != 1.toByte()) {
+        if (bytes.size !in 30..(maxSize + 29) || bytes[0] != 1.toByte()) {
             throw IOException("Invalid vault format")
         }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -59,7 +60,7 @@ class SecurePinVault(context: Context) {
     @Synchronized
     fun write(value: String) {
         val plain = value.toByteArray(Charsets.UTF_8)
-        if (plain.size > 60000) throw IOException("Vault record too large")
+        if (plain.size > maxSize) throw IOException("Vault record too large")
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key(true))
         cipher.updateAAD(aad)

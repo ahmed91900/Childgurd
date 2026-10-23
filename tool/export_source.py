@@ -15,7 +15,7 @@ def main():
         cwd=ROOT, check=True, capture_output=True,
     )
     paths = sorted(set(p for p in result.stdout.decode().split("\0") if p))
-    sections = ["# KidSafe Launcher — full Phase 1 file contents\n\n"
+    sections = ["# KidSafe Launcher — full v0.2 beta file contents\n\n"
                 "Every project file is included in full. Binary files are encoded as base64.\n"]
     for name in paths:
         path = ROOT / name

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
   <title id="title">KidSafe Launcher</title>
-  <desc id="desc">A navy and mint project banner with an original shield illustration. A thoughtful start for family screen time. Flutter and Android. English and Arabic.</desc>
+  <desc id="desc">A navy and mint project banner with an original shield illustration. A thoughtful start for family screen time. Flutter and Android. English, Bangla and Arabic.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#102C43"/><stop offset="1" stop-color="#174D73"/>
@@ -16,7 +16,7 @@
   <path d="M64 263H745" stroke="#FFFFFF" stroke-opacity=".16"/>
   <text x="64" y="306" fill="#A6E6D5" font-family="Arial, sans-serif" font-size="17" letter-spacing="1">FLUTTER + KOTLIN</text>
   <circle cx="291" cy="300" r="3" fill="#A6E6D5"/>
-  <text x="314" y="306" fill="#D6E5EF" font-family="Arial, sans-serif" font-size="17">English &amp; العربية</text>
+  <text x="314" y="306" fill="#D6E5EF" font-family="Arial, sans-serif" font-size="17">English · বাংলা · العربية</text>
   <text x="64" y="351" fill="#B4CCDD" font-family="Arial, sans-serif" font-size="15">Secure PIN spaces. Guided setup. Built step by step.</text>
   <rect x="911" y="52" width="230" height="298" rx="36" fill="#0C2539" stroke="#7699AF" stroke-width="2"/>
   <rect x="926" y="68" width="200" height="266" rx="25" fill="#F5F7FB"/>

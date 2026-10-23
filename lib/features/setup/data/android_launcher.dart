@@ -31,6 +31,19 @@ class AndroidLauncher {
     }).toList();
   }
 
+  Future<void> beginParentExternal() =>
+      _channel.invokeMethod<void>('beginParentExternal');
+  Future<void> speechSettings() =>
+      _channel.invokeMethod<void>('request', 'speech');
+
+  Future<bool> speak(String text, String language) async =>
+      await _channel.invokeMethod<bool>('speak', {
+        'text': text,
+        'language': language,
+      }) ??
+      false;
+  Future<void> stopSpeech() => _channel.invokeMethod<void>('stopSpeech');
+
   Future<void> open(String package) =>
       _channel.invokeMethod<void>('open', package);
 }

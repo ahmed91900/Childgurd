@@ -8,7 +8,7 @@ Discuss feature scope before implementing another phase.
 
 1. Describe the user problem and the expected behavior.
 2. Keep domain policy separate from storage, Android APIs and UI code.
-3. Add English and Arabic strings together. Check RTL and text scaling.
+3. Add English, Bangla and Arabic strings together. Check RTL and text scaling.
 4. Use original or appropriately licensed content and record attribution.
 5. Add tests for changed security or task behavior; state what still requires a
    physical device. Do not describe mocked Android calls as device validation.

@@ -16,3 +16,11 @@ __pycache__/
 google-services.json
 firebase_options.dart
 docs/FULL_SOURCE.md
+
+node_modules/
+.firebase/
+*-debug.log
+firestore-debug.log
+firebase-config.json
+
+*.p12

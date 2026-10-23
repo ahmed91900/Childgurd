@@ -1,21 +1,41 @@
 import 'package:flutter/widgets.dart';
+import 'learning_strings.dart';
 
 /// Every user-facing Flutter string has both Arabic and English translations.
 /// Locale switching uses Flutter's localization delegates for layout direction.
 class Strings {
-  const Strings(this.arabic);
+  const Strings(this.arabic, {this.bangla = false});
+  final bool bangla;
+  String get language => arabic
+      ? 'ar'
+      : bangla
+      ? 'bn'
+      : 'en';
   final bool arabic;
-  static Strings of(BuildContext context) =>
-      Strings(Localizations.localeOf(context).languageCode == 'ar');
-  String operator [](String key) => (arabic ? _ar : _en)[key] ?? key;
+  static Strings of(BuildContext context) => Strings(
+    Localizations.localeOf(context).languageCode == 'ar',
+    bangla: Localizations.localeOf(context).languageCode == 'bn',
+  );
+  String operator [](String key) =>
+      (bangla
+          ? banglaStrings
+          : arabic
+          ? _ar
+          : _en)[key] ??
+      learningStrings[key]?[bangla
+          ? 2
+          : arabic
+          ? 1
+          : 0] ??
+      key;
 
   static const _en = {
     'app': 'KidSafe Launcher',
     'tagline': 'A little structure. A world to discover.',
-    'phase': 'Phase 1 • Setup foundation, not a child-proof device',
+    'phase': 'Supervised beta • Android restrictions have limits',
     'welcome': 'A safer start, together',
     'welcomeBody':
-        'Create private PINs, review privacy, and prepare Android permissions. This version does not yet block other apps.',
+        'Create private PINs, review privacy, and prepare Android permissions. Learning and progress work offline. Remote sync needs Firebase setup.',
     'consent':
         'I am the parent or legal guardian. I understand the Android limits and consent to storing PIN credentials on this device.',
     'privacy': 'Privacy & Android limits',
@@ -56,13 +76,13 @@ class Strings {
         'Android usually requires deactivation before uninstall. A user can still deactivate it; this is not uninstall-proof.',
     'accessibility': 'Accessibility service',
     'accessibilityBody':
-        'Optional in Phase 1: status only. Later app restrictions will need explicit consent. This service currently reads no screen content and blocks no apps.',
+        'With your explicit consent, observes app package changes and tries to return Home when another app opens in child mode. It reads no screen text. System surfaces and some OEM behavior remain outside reliable control.',
     'overlay': 'Display over other apps',
     'overlayBody':
         'Prepare overlay access. System screens may reject overlays; this does not secure Settings.',
     'usage': 'Usage access',
     'usageBody':
-        'Prepare usage access for later time reports. Phase 1 does not collect usage history.',
+        'Optional Android usage-access status. KidSafe measures its own play and video time without reading other apps’ usage history.',
     'granted': 'Granted',
     'grant': 'Open settings',
     'permissionError':
@@ -88,16 +108,16 @@ class Strings {
     'back': 'Back',
     'privacyTitle': 'Privacy, consent & real limits',
     'privacyBody':
-        'Phase 1 stores only salted PIN hashes, retry counters, and lockout timestamps in Android encrypted storage. It uses no analytics, advertising, Firebase, child names, camera, microphone, or location. No PIN is sent to a server. Android backup is disabled.\n\nThis app is a home launcher, not Android’s keyguard. Android Settings, notification shade, recents, emergency calling, safe mode, reboots, permission revocation, app-data clearing and factory resets cannot be reliably blocked without managed-device controls. Device Admin can be deactivated. Accessibility and overlays do not guarantee containment. Never rely on this phase for unsupervised child protection.\n\nClearing app data or uninstalling deletes local credentials and resets setup. There is no recovery bypass. Lockout survives normal process restarts; changing the device clock can affect time-based lockout. Use the Android system screen lock as well.\n\nFirebase, remote parenting, learning content and telemetry are not active in Phase 1. Before adding them, we must define parental verification, retention, deletion, consent and child-safe content policies. This prototype is not a claim of COPPA or GDPR-K compliance.',
+        'PIN hashes and the local family ledger are encrypted with Android Keystore. Profiles, tasks, progress, drawings and time requests stay on this phone unless a parent activates online family sync. No camera, microphone, location or contacts are collected. PINs never go to Firebase. Android backup and device transfer are disabled.\n\nOnline mode uses Firebase Auth, Firestore and FCM for the configured family. A verified parent can pair one scoped child device per profile. The parent must arrange consent, retention and deletion for their deployment. Offline learning remains available if the network is unavailable.\n\nAds are off by default. An owner-controlled setting and the parent’s child-profile permission are both needed. AdMob requests are tagged as child-directed, under age of consent, non-personalized, maximum content rating G. Manual ads connect to their approved media host. The operator must review content and applicable advertising policies; these settings do not certify legal compliance.\n\nThis launcher does not replace Android keyguard. Accessibility observes package names only and makes a best-effort Home redirect in child mode. It cannot reliably block system settings, notifications, safe mode, permission revocation, data clearing or factory reset. Supervise children and use Android’s system screen lock.\n\nClearing app data or uninstalling may delete local credentials and progress. There is no recovery PIN. Device clock changes affect daily limits and lockout. This app is not a COPPA or GDPR-K certification.',
   };
 
   static const _ar = {
     'app': 'كيد سيف',
     'tagline': 'خطوات صغيرة نحو عالم من الاكتشاف.',
-    'phase': 'المرحلة الأولى • إعداد أولي وليس حماية كاملة للطفل',
+    'phase': 'إصدار تجريبي بإشراف ولي الأمر • قيود أندرويد لها حدود',
     'welcome': 'بداية أكثر أماناً، معاً',
     'welcomeBody':
-        'أنشئ رموزاً خاصة وراجع الخصوصية وجهز أذونات أندرويد. هذا الإصدار لا يمنع فتح التطبيقات الأخرى بعد.',
+        'أنشئ رموزاً خاصة وراجع الخصوصية وجهز أذونات أندرويد. التعلم والتقدم يعملان دون اتصال. المزامنة عن بعد تتطلب إعداد فايربيس.',
     'consent':
         'أنا ولي الأمر أو الوصي القانوني. أفهم حدود أندرويد وأوافق على تخزين بيانات الرموز على هذا الجهاز.',
     'privacy': 'الخصوصية وحدود أندرويد',
@@ -138,7 +158,7 @@ class Strings {
         'يتطلب أندرويد عادة إلغاء التفعيل قبل الإزالة. يمكن للمستخدم إلغاء التفعيل؛ هذه ليست حماية مضمونة من الإزالة.',
     'accessibility': 'خدمة تسهيل الاستخدام',
     'accessibilityBody':
-        'اختيارية في المرحلة الأولى لعرض الحالة فقط. القيود اللاحقة تتطلب موافقة صريحة. الخدمة حالياً لا تقرأ محتوى الشاشة ولا تمنع التطبيقات.',
+        'بموافقتك الصريحة تراقب تغير حزمة التطبيق وتحاول العودة إلى الرئيسية عند فتح تطبيق آخر في وضع الطفل. لا تقرأ نص الشاشة. لا يمكن ضمان التحكم في واجهات النظام وجميع الأجهزة.',
     'overlay': 'الظهور فوق التطبيقات',
     'overlayBody':
         'تجهيز إذن الظهور. قد تمنعه شاشات النظام؛ ولا يحمي الإعدادات.',
@@ -168,6 +188,6 @@ class Strings {
     'back': 'رجوع',
     'privacyTitle': 'الخصوصية والموافقة والحدود الفعلية',
     'privacyBody':
-        'تخزن المرحلة الأولى بصمات الرموز المملحة وعدّادات المحاولات وأوقات الحظر في تخزين أندرويد المشفر فقط. لا تحليلات ولا إعلانات ولا فايربيس ولا أسماء أطفال ولا كاميرا ولا ميكروفون ولا موقع. لا تُرسل الرموز إلى خادم. النسخ الاحتياطي معطل.\n\nهذا مشغل شاشة رئيسية وليس قفل نظام أندرويد. لا يمكن ضمان منع الإعدادات والإشعارات والتطبيقات الأخيرة ومكالمات الطوارئ والوضع الآمن وإعادة التشغيل وإلغاء الأذونات ومسح البيانات وإعادة ضبط المصنع دون إدارة الجهاز. يمكن إلغاء مسؤول الجهاز. تسهيل الاستخدام والظهور فوق التطبيقات لا يضمنان الاحتواء. لا تعتمد على هذه المرحلة لحماية طفل دون إشراف.\n\nمسح البيانات أو إزالة التطبيق يمحو الرموز ويعيد الإعداد. لا توجد طريقة تجاوز لاسترداد الرمز. يستمر حظر المحاولات بعد إعادة تشغيل التطبيق، لكن تغيير ساعة الجهاز قد يؤثر عليه. استخدم قفل أندرويد أيضاً.\n\nفايربيس والإدارة عن بعد والمحتوى التعليمي غير مفعلة في المرحلة الأولى. قبل إضافتها يجب تحديد التحقق من ولي الأمر والاحتفاظ بالبيانات وحذفها والموافقة وسياسات المحتوى الآمن. هذا النموذج ليس إقراراً بالامتثال لقوانين حماية خصوصية الأطفال.',
+        'تُشفر بصمات الرموز وملفات الأطفال والمهام والتقدم والرسومات والطلبات على الهاتف بمفتاح أندرويد كيسـتور. تبقى محلياً ما لم يفعّل ولي الأمر المزامنة العائلية. لا كاميرا ولا ميكروفون ولا موقع ولا جهات اتصال. لا تُرسل الرموز إلى فايربيس. النسخ الاحتياطي ونقل البيانات معطلان.\n\nالمزامنة تستخدم مصادقة فايربيس وفايرستور والإشعارات للمشروع المحدد. يستطيع حساب ولي أمر موثق ربط جهاز طفل بصلاحيات محدودة. يلزم المشغّل تنظيم الموافقة والاحتفاظ والحذف. التعلم المحلي يعمل دون اتصال.\n\nالإعلانات معطلة افتراضياً. تتطلب تفعيل المالك وموافقة ولي الأمر في ملف الطفل. طلبات أدموب موجهة للأطفال وتحت سن الموافقة وغير مخصصة وبحد تصنيف G. الإعلانات اليدوية تتصل بمضيف الوسائط المعتمد. يجب مراجعة المحتوى وسياسات الإعلانات؛ هذه الخيارات ليست شهادة امتثال.\n\nهذا مشغّل وليس قفل نظام أندرويد. خدمة تسهيل الاستخدام تراقب أسماء الحزم فقط وتحاول العودة إلى الرئيسية في وضع الطفل. لا تضمن منع الإعدادات والإشعارات والوضع الآمن وإلغاء الأذونات ومسح البيانات وإعادة ضبط المصنع. يجب الإشراف على الطفل واستخدام قفل النظام.\n\nمسح البيانات أو الإزالة قد يمحو الرموز والتقدم. لا يوجد رمز استرداد سري. تغيير الساعة يؤثر في الحدود اليومية والحظر. هذا التطبيق ليس شهادة امتثال لقوانين حماية الأطفال.',
   };
 }

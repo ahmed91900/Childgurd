@@ -1,9 +1,68 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Phase 1 has no cloud clients. Replace only alongside tested family rules.
-    match /{document=**} {
-      allow read, write: if false;
+    function signed() { return request.auth != null; }
+    function parent(f) {
+      return signed() && request.auth.uid == f && request.auth.token.email_verified == true && request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+        get(/databases/$(database)/documents/parentAccounts/$(f)).data.active == true;
     }
+    function device(f,c) {
+      return signed() && exists(/databases/$(database)/documents/devices/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/devices/$(request.auth.uid)).data.active == true &&
+        get(/databases/$(database)/documents/devices/$(request.auth.uid)).data.family == f &&
+        get(/databases/$(database)/documents/devices/$(request.auth.uid)).data.child == c &&
+        exists(/databases/$(database)/documents/families/$(f)) &&
+        get(/databases/$(database)/documents/families/$(f)/children/$(c)).data.deviceId == request.auth.uid;
+    }
+    function progressValid(f,c,date) {
+      let d=request.resource.data;
+      return d.keys().hasOnly(['family','child','date','device','done','points','tally','seconds','bonus','updatedAt']) &&
+        d.family==f && d.child==c && d.date==date && date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+        d.device==request.auth.uid && d.done is list && d.done.size()<=120 &&
+        d.points is int && d.points>=0 && d.points<=10000 &&
+        (!('tally' in d) || (d.tally is int && d.tally>=0 && d.tally<=1000000000)) &&
+        d.seconds is int && d.seconds>=0 && d.seconds<=21600 &&
+        d.bonus is int && d.bonus>=0 && d.bonus<=180 && d.updatedAt==request.time;
+    }
+    match /families/{f} {
+      allow read: if parent(f);
+      allow create,update: if parent(f) && request.resource.data.owner==f && request.resource.data.keys().hasOnly(['owner','updatedAt']);
+      allow delete: if parent(f);
+      match /children/{c} {
+        allow read: if parent(f)||device(f,c);
+        allow create,update: if parent(f) &&
+          request.resource.data.keys().hasOnly(['profile','custom','videos','decisions','updatedAt','deviceId']) &&
+          request.resource.data.profile.id==c && request.resource.data.profile.name is string && request.resource.data.profile.name.size()<=100 &&
+          request.resource.data.profile.age is int && request.resource.data.profile.age>=3 && request.resource.data.profile.age<=17 &&
+          request.resource.data.custom is list && request.resource.data.custom.size()<=100 &&
+          request.resource.data.videos is list && request.resource.data.videos.size()<=40 &&
+          request.resource.data.decisions is map && request.resource.data.decisions.size()<=200 &&
+          (!('deviceId' in request.resource.data) || ('deviceId' in resource.data && request.resource.data.deviceId==resource.data.deviceId));
+        allow delete: if parent(f);
+        match /progress/{date} {
+          allow read: if parent(f)||device(f,c);
+          allow create: if device(f,c)&&progressValid(f,c,date);
+          allow update: if device(f,c)&&progressValid(f,c,date) && request.resource.data.seconds>=resource.data.seconds &&
+            request.resource.data.points>=resource.data.points && request.resource.data.done.hasAll(resource.data.done);
+          allow delete: if parent(f);
+        }
+        match /requests/{id} {
+          allow read: if parent(f)||device(f,c);
+          allow create,update: if device(f,c) && request.resource.data.family==f && request.resource.data.child==c &&
+            request.resource.data.device==request.auth.uid && request.resource.data.status=='pending' &&
+            request.resource.data.minutes==10 && request.resource.data.id==id && request.resource.data.updatedAt==request.time &&
+            request.resource.data.keys().hasOnly(['id','child','family','device','date','status','minutes','updatedAt']);
+          allow delete: if parent(f);
+        }
+      }
+    }
+    match /{path=**}/progress/{id} { allow read: if signed() && resource.data.family==request.auth.uid && parent(request.auth.uid); }
+    match /{path=**}/requests/{id} { allow read: if signed() && resource.data.family==request.auth.uid && parent(request.auth.uid); }
+    match /devices/{uid} {
+      allow read: if signed() && (request.auth.uid==uid || parent(resource.data.family));
+      allow write: if false;
+    }
+    match /publicConfig/monetization { allow read: if signed(); allow write: if false; }
+    match /{document=**} { allow read,write: if false; }
   }
 }

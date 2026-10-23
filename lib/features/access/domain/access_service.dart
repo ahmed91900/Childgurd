@@ -28,6 +28,7 @@ class AccessService {
   final DateTime Function() _now;
   Map<String, dynamic>? _record;
   bool _busy = false;
+  String? childId;
 
   bool get configured => _record?['configured'] == true;
   int get failures => (_record?['failures'] as int?) ?? 0;
@@ -92,7 +93,15 @@ class AccessService {
   Future<PhoneMode> _check(String pin, {bool parentOnly = false}) async {
     if (remaining > Duration.zero) throw const AccessDenied('locked');
     final parent = await _hasher.verify(pin, _record!['parent'] as String);
-    final kid = await _hasher.verify(pin, _record!['kid'] as String);
+    var kid = await _hasher.verify(pin, _record!['kid'] as String);
+    String? matched = kid ? 'child' : null;
+    final extra = Map<String, dynamic>.from(_record!['children'] as Map? ?? {});
+    for (final entry in extra.entries) {
+      if (await _hasher.verify(pin, entry.value as String)) {
+        kid = true;
+        matched = entry.key;
+      }
+    }
     if (!parent && (!kid || parentOnly || !configured)) {
       final count = failures + 1;
       await _save({
@@ -109,6 +118,7 @@ class AccessService {
       'lockedUntil': 0,
       'lastSeen': _effectiveNow,
     });
+    childId = parent ? null : matched;
     return parent ? PhoneMode.parent : PhoneMode.kid;
   }
 
@@ -132,6 +142,12 @@ class AccessService {
       throw const AccessDenied('pinPolicy');
     }
     await _check(currentParent, parentOnly: true);
+    for (final encoded in (_record!['children'] as Map? ?? {}).values) {
+      if (await _hasher.verify(parent, encoded as String) ||
+          await _hasher.verify(kid, encoded)) {
+        throw const AccessDenied('pinPolicy');
+      }
+    }
     final parentHash = await _hasher.hash(parent);
     final kidHash = await _hasher.hash(kid);
     await _save({
@@ -140,5 +156,34 @@ class AccessService {
       'parent': parentHash,
       'kid': kidHash,
     });
+  });
+  Future<void> setChildPin({
+    required String currentParent,
+    required String id,
+    required String pin,
+  }) => _exclusive(() async {
+    if (!configured ||
+        id == 'child' ||
+        !RegExp(r'^\d{4,12}$').hasMatch(pin) ||
+        const ['1020', '0000'].contains(pin)) {
+      throw const AccessDenied('pinPolicy');
+    }
+    await _check(currentParent, parentOnly: true);
+    final extra = Map<String, dynamic>.from(_record!['children'] as Map? ?? {});
+    if (await _hasher.verify(pin, _record!['parent'] as String) ||
+        await _hasher.verify(pin, _record!['kid'] as String)) {
+      throw const AccessDenied('pinPolicy');
+    }
+    for (final entry in extra.entries) {
+      if (entry.key != id && await _hasher.verify(pin, entry.value as String)) {
+        throw const AccessDenied('pinPolicy');
+      }
+    }
+    extra[id] = await _hasher.hash(pin);
+    await _save({..._record!, 'children': extra});
+  });
+  Future<void> verifyParent(String pin) => _exclusive(() async {
+    if (!configured) throw const AccessDenied('setupRequired');
+    await _check(pin, parentOnly: true);
   });
 }

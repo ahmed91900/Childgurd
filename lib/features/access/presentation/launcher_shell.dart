@@ -9,6 +9,8 @@ import '../../setup/data/android_launcher.dart';
 import '../../setup/presentation/permission_wizard.dart';
 import '../domain/access_service.dart';
 import 'pin_form.dart';
+import '../../family/presentation/family_hub.dart';
+import '../../cloud/data/cloud_sync.dart';
 
 enum _Screen { welcome, pins, permissions, lock, parent, kid, privacy }
 
@@ -131,6 +133,8 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
     _pin.clear();
     final mode = await _access.unlock(input, parentOnly: _parentOnly);
     if (!mounted || epoch != _epoch) return;
+    if (mode == PhoneMode.kid) await ref.read(cloudProvider).enterKid();
+    if (!mounted || epoch != _epoch) return;
     await _device.setKidMode(mode != PhoneMode.parent);
     if (!mounted || epoch != _epoch) {
       await _device.setKidMode(true);
@@ -192,9 +196,15 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
         appBar: AppBar(
           title: Text(s['app']),
           actions: [
-            TextButton(
-              onPressed: () => widget.onLocale(Locale(s.arabic ? 'en' : 'ar')),
-              child: Text(s.arabic ? 'English' : 'العربية'),
+            PopupMenuButton<String>(
+              tooltip: 'English · বাংলা · العربية',
+              icon: const Icon(Icons.language),
+              onSelected: (language) => widget.onLocale(Locale(language)),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'en', child: Text('English')),
+                PopupMenuItem(value: 'bn', child: Text('বাংলা')),
+                PopupMenuItem(value: 'ar', child: Text('العربية')),
+              ],
             ),
           ],
         ),
@@ -205,7 +215,7 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -376,6 +386,7 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
             ],
           ),
           const SizedBox(height: 24),
+          const FamilyHub(parent: true),
           FutureBuilder<List<InstalledApp>>(
             future: _apps,
             builder: (context, snapshot) {
@@ -401,57 +412,9 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
           ),
         ];
       case _Screen.kid:
-        const colors = [
-          Color(0xffd4eff3),
-          Color(0xffffe6bd),
-          Color(0xffe3def6),
-          Color(0xffd8edcf),
-        ];
-        const icons = [
-          Icons.auto_stories_rounded,
-          Icons.ondemand_video_rounded,
-          Icons.extension_rounded,
-          Icons.stars_rounded,
-        ];
-        const labels = ['tasks', 'videos', 'games', 'rewards'];
         return [
-          Text(s['kid'], style: Theme.of(context).textTheme.headlineLarge),
-          const SizedBox(height: 8),
-          Text(s['kidBody']),
-          const SizedBox(height: 24),
-          for (var i = 0; i < labels.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: colors[i],
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    Icon(icons[i], size: 40, color: const Color(0xff203b52)),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s[labels[i]],
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(color: const Color(0xff203b52)),
-                          ),
-                          Text(
-                            s['coming'],
-                            style: const TextStyle(color: Color(0xff203b52)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          FamilyHub(parent: false, childId: _access.childId ?? 'child'),
+          const SizedBox(height: 16),
           OutlinedButton(
             onPressed: () => _lock(parentOnly: true),
             child: Text(s['exit']),

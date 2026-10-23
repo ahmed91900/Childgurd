@@ -1,7 +1,7 @@
-# Play Store release gate — not complete in Phase 1
+# Play Store release gate — not complete in v0.2 beta
 
 - [ ] Finish the requested core features and remove any claims for unsupported
-  capabilities. Do not distribute this foundation as child-proof protection.
+  capabilities. Do not distribute this beta as child-proof protection.
 - [ ] Complete the physical-device matrix in `DEVICE_TESTS.md`; record devices,
   versions, results, known escape paths and minimum supported hardware.
 - [ ] Review the latest Google Play AccessibilityService policy, submit the
@@ -47,5 +47,4 @@
 - [ ] Prepare honest listing text, screenshots, support contact, parental setup
   guide and limitations. No absolute blocking, uninstall-proof or compliance claims.
 
-No release key, production Firebase project, Store submission or policy approval
-is included or implied by Phase 1.
+No release key, production Firebase deployment, Store submission or policy approval is included in this beta. Rules, callable functions, account deletion and owner media controls are emulator-tested; production operation remains a separate release gate.

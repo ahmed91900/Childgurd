@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">KidSafe Launcher</string>
-    <string name="accessibility_description">Phase 1 setup only. This service does not read screen content or block apps. Enable only if you are the parent and understand that device restrictions are not active yet.</string>
+    <string name="accessibility_description">Only with parent consent: observes app package changes and attempts to return to the selected Home launcher when other apps open in child mode. No screen content is read or transmitted. System screens, revocations and OEM behavior prevent guaranteed blocking.</string>
 </resources>

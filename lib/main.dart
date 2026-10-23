@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,13 +18,33 @@ class KidSafeApp extends StatefulWidget {
 
 class _KidSafeAppState extends State<KidSafeApp> {
   Locale? _locale;
+  static const _device = MethodChannel('com.kidsafe.launcher/device');
+  @override
+  void initState() {
+    super.initState();
+    _device
+        .invokeMethod<String>('getLanguage')
+        .then((code) {
+          if (mounted && ['en', 'bn', 'ar'].contains(code)) {
+            setState(() => _locale = Locale(code!));
+          }
+        })
+        .catchError((Object _) {});
+  }
+
+  void _language(Locale locale) {
+    setState(() => _locale = locale);
+    _device
+        .invokeMethod<void>('setLanguage', locale.languageCode)
+        .catchError((Object _) {});
+  }
 
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'KidSafe Launcher',
     debugShowCheckedModeBanner: false,
     locale: _locale,
-    supportedLocales: const [Locale('en'), Locale('ar')],
+    supportedLocales: const [Locale('en'), Locale('bn'), Locale('ar')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     theme: ThemeData(
       useMaterial3: true,
@@ -46,6 +67,6 @@ class _KidSafeAppState extends State<KidSafeApp> {
         style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
       ),
     ),
-    home: LauncherShell(onLocale: (locale) => setState(() => _locale = locale)),
+    home: LauncherShell(onLocale: _language),
   );
 }

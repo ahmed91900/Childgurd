@@ -7,6 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import android.os.Build
 import android.os.Bundle
 import android.os.Process
@@ -22,6 +24,9 @@ import java.util.concurrent.Executors
 class MainActivity : FlutterActivity() {
     // Parent authorization is intentionally ephemeral; process death locks it.
     private var kidMode = true
+    private var externalSession = false
+    private var speech: TextToSpeech? = null
+    private var speechReady = false
     companion object {
         // Serialize vault IO across Activity/engine recreation within a process.
         private val vaultExecutor = Executors.newSingleThreadExecutor()
@@ -31,11 +36,31 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        speech = TextToSpeech(applicationContext) { status -> speechReady = status == TextToSpeech.SUCCESS }
     }
 
     override fun onPause() {
         kidMode = true
+        speech?.stop()
         super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (externalSession) {
+            externalSession = false
+            getSharedPreferences("KidSafePolicy", Context.MODE_PRIVATE).edit().putBoolean("blocked", true).commit()
+        }
+    }
+
+    override fun onDestroy() {
+        speech?.stop()
+        speech?.shutdown()
+        super.onDestroy()
+    }
+
+    private fun policy(blocked: Boolean) {
+        getSharedPreferences("KidSafePolicy", Context.MODE_PRIVATE).edit().putBoolean("blocked", blocked).commit()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -59,19 +84,70 @@ class MainActivity : FlutterActivity() {
                     }
                 }
             }
+        val familyVault by lazy { SecurePinVault(applicationContext, true) }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.kidsafe.launcher/family")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "read" && call.method != "write") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                vaultExecutor.execute {
+                    try {
+                        val value = if (call.method == "read") familyVault.read() else {
+                            familyVault.write(call.arguments as String)
+                            null
+                        }
+                        uiHandler.post { result.success(value) }
+                    } catch (e: Exception) {
+                        uiHandler.post { result.error("FAMILY_STORAGE_FAILED", "Storage unavailable", null) }
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.kidsafe.launcher/device")
             .setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
                         "status" -> result.success(permissionStatus())
+                        "getLanguage" -> result.success(getSharedPreferences("KidSafePolicy", Context.MODE_PRIVATE).getString("language", ""))
+                        "setLanguage" -> {
+                            val value = call.arguments as String
+                            check(value in listOf("en", "bn", "ar"))
+                            getSharedPreferences("KidSafePolicy", Context.MODE_PRIVATE).edit().putString("language", value).commit()
+                            result.success(null)
+                        }
                         "setKidMode" -> {
                             kidMode = call.arguments as? Boolean ?: true
+                            if (!externalSession || !kidMode) policy(kidMode)
+                            if (kidMode) speech?.stop()
                             result.success(null)
                         }
                         "request" -> {
                             // Internal channel; Flutter requires parent setup/auth.
+                            externalSession = true
+                            policy(false)
                             requestPermission(call.arguments as String)
                             result.success(null)
+                        }
+                        "beginParentExternal" -> {
+                            check(!kidMode) { "Parent authorization required" }
+                            externalSession = true
+                            policy(false)
+                            result.success(null)
+                        }
+                        "stopSpeech" -> { speech?.stop(); result.success(null) }
+                        "speak" -> {
+                            val args = call.arguments as Map<*, *>
+                            val text = (args["text"] as String).take(2000)
+                            val language = args["language"] as String
+                            val engine = speech
+                            val voice = if (speechReady) engine?.voices?.firstOrNull {
+                                it.locale.language == Locale.forLanguageTag(language).language && !it.isNetworkConnectionRequired
+                            } else null
+                            if (voice == null || engine == null) result.success(false) else {
+                                engine.voice = voice
+                                engine.setSpeechRate(0.8f)
+                                result.success(engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "kidsafe-lesson") == TextToSpeech.SUCCESS)
+                            }
                         }
                         "apps" -> {
                             check(!kidMode) { "Parent authorization required" }
@@ -89,6 +165,8 @@ class MainActivity : FlutterActivity() {
                             val target = call.arguments as String
                             val intent = packageManager.getLaunchIntentForPackage(target)
                                 ?: error("App is unavailable")
+                            externalSession = true
+                            policy(false)
                             startActivity(intent)
                             result.success(null)
                         }
@@ -128,6 +206,7 @@ class MainActivity : FlutterActivity() {
     private fun requestPermission(name: String) {
         val packageUri = "package:$packageName".toUri()
         val intent = when (name) {
+            "speech" -> Intent("com.android.settings.TTS_SETTINGS")
             "home" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val roles = getSystemService(RoleManager::class.java)

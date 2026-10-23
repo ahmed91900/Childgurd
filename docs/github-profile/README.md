@@ -10,7 +10,7 @@
 ## Hi, I'm Mohammed
 
 I'm building **KidSafe Launcher**, an Android project exploring parent-controlled
-phone access and a bilingual learning space for children.
+phone access and an English/Bangla learning space for children.
 
 My focus for this project is a clear user experience, careful handling of local
 credentials, and honest, testable progress through each development phase.
@@ -19,19 +19,16 @@ credentials, and honest, testable progress through each development phase.
 
 ### [KidSafe Launcher](https://github.com/extramail9922-alt/Childgurd)
 
-A Flutter Android launcher foundation with parent and child PIN spaces,
-encrypted local credentials, guided permission setup, and English/Arabic support.
+A Flutter Android launcher with parent and child PIN spaces, encrypted local data, guided Android setup, nine learning activities, original English/Bangla stories and an offline alphabet book. English, Bangla and Arabic UI are available.
 
-**Phase 1:** the launcher and setup foundation are implemented. Physical-device
-validation, app restrictions, learning activities and Firebase integration remain
-on the roadmap.
+**v0.2 beta:** offline learning and local family controls are implemented. Firebase pairing/sync and owner-controlled ads are emulator-tested; a production project, signed release and real-device validation remain required.
 
 [Explore the source](https://github.com/extramail9922-alt/Childgurd) ·
-[Read the validation report](https://github.com/extramail9922-alt/Childgurd/blob/main/docs/PHASE1_VALIDATION.md)
+[Read the validation report](https://github.com/extramail9922-alt/Childgurd/blob/main/docs/VALIDATION.md)
 
 ## Tools in this project
 
-Flutter · Dart · Kotlin · Android · Riverpod · GitHub Actions
+Flutter · Dart · Kotlin · Android · Riverpod · Firebase · GitHub Actions
 
 The project includes unit and widget tests, Android build automation, RTL support,
 and documented privacy and platform boundaries.

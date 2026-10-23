@@ -1,17 +1,17 @@
-name: Android Phase 1
+name: Android and Firebase beta checks
 on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  verify:
+  flutter:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.35.7'
@@ -21,7 +21,28 @@ jobs:
       - run: flutter analyze
       - run: flutter test --reporter expanded
       - run: flutter build apk --debug --target-platform android-arm64
+      - run: ./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm64
       - uses: actions/upload-artifact@v4
         with:
-          name: kidsafe-phase1-arm64-debug
+          name: kidsafe-arm64-beta
           path: build/app/outputs/flutter-apk/app-debug.apk
+  firebase:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            firebase/functions/package-lock.json
+            firebase/rules-tests/package-lock.json
+      - run: npm ci --prefix firebase/functions
+      - run: npm ci --prefix firebase/rules-tests
+      - run: npm audit --omit=dev --prefix firebase/functions --audit-level=moderate
+      - run: firebase/rules-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore,functions,storage --project demo-kidsafe --config firebase/firebase.json 'npm --prefix firebase/rules-tests test'

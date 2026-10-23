@@ -188,4 +188,79 @@ void main() {
     await expectLater(service.unlock('458291'), throwsA(denied('busy')));
     expect(await first, PhoneMode.parent);
   });
+  test(
+    'additional child PINs are unique, scoped, and persist across reload',
+    () async {
+      await configure();
+      await service.setChildPin(
+        currentParent: '729384',
+        id: 'second',
+        pin: '839271',
+      );
+      expect(await service.unlock('839271'), PhoneMode.kid);
+      expect(service.childId, 'second');
+      await service.unlock('458291');
+      expect(service.childId, 'child');
+      service = AccessService(vault, FakeHasher(), now: () => now);
+      await service.load();
+      await service.unlock('839271');
+      expect(service.childId, 'second');
+    },
+  );
+  test(
+    'child cannot create a profile credential or escape with another child PIN',
+    () async {
+      await configure();
+      await expectLater(
+        service.setChildPin(
+          currentParent: '458291',
+          id: 'second',
+          pin: '839271',
+        ),
+        throwsA(denied('wrong')),
+      );
+      await service.setChildPin(
+        currentParent: '729384',
+        id: 'second',
+        pin: '839271',
+      );
+      await expectLater(
+        service.unlock('839271', parentOnly: true),
+        throwsA(denied('wrong')),
+      );
+    },
+  );
+  test(
+    'profile PINs cannot duplicate parent, primary child, or other child PINs',
+    () async {
+      await configure();
+      for (final pin in ['729384', '458291', '1020', '0000']) {
+        await expectLater(
+          service.setChildPin(currentParent: '729384', id: 'second', pin: pin),
+          throwsA(denied('pinPolicy')),
+        );
+      }
+      await service.setChildPin(
+        currentParent: '729384',
+        id: 'second',
+        pin: '839271',
+      );
+      await expectLater(
+        service.setChildPin(
+          currentParent: '729384',
+          id: 'third',
+          pin: '839271',
+        ),
+        throwsA(denied('pinPolicy')),
+      );
+      await expectLater(
+        service.changePins(
+          currentParent: '729384',
+          parent: '839271',
+          kid: '982347',
+        ),
+        throwsA(denied('pinPolicy')),
+      );
+    },
+  );
 }

@@ -4,7 +4,11 @@
     <!-- User-granted special access via AppOps, not a system-only grant. -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <queries>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
@@ -19,6 +23,11 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:usesCleartextTraffic="false"
         android:supportsRtl="true">
+        <!-- Official Google test app ID; production ID is supplied at build time. -->
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="${admobAppId}" />
+        <meta-data android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT" android:value="true" />
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

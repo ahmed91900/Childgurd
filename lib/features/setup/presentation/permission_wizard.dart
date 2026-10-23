@@ -5,12 +5,18 @@ import '../../../core/providers.dart';
 import '../../../l10n/strings.dart';
 import '../data/android_launcher.dart';
 
-class PermissionWizard extends ConsumerWidget {
+class PermissionWizard extends ConsumerStatefulWidget {
   const PermissionWizard({super.key, required this.onContinue});
   final VoidCallback onContinue;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PermissionWizard> createState() => _PermissionWizardState();
+}
+
+class _PermissionWizardState extends ConsumerState<PermissionWizard> {
+  bool consent = false;
+  @override
+  Widget build(BuildContext context) {
     final s = Strings.of(context);
     final permissions = ref.watch(permissionProvider);
     return Column(
@@ -65,21 +71,36 @@ class PermissionWizard extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(s['${permission.name}Body']),
                         const SizedBox(height: 8),
+                        if (permission == SetupPermission.accessibility &&
+                            status[permission.name] != true)
+                          CheckboxListTile(
+                            value: consent,
+                            onChanged: (v) =>
+                                setState(() => consent = v ?? false),
+                            title: Text(s['accessibilityConsent']),
+                          ),
                         OutlinedButton(
-                          onPressed: () async {
-                            try {
-                              await ref
-                                  .read(launcherProvider)
-                                  .request(permission);
-                            } catch (_) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(s['error'])),
-                                );
-                              }
-                            }
-                            ref.invalidate(permissionProvider);
-                          },
+                          onPressed:
+                              permission == SetupPermission.accessibility &&
+                                  status[permission.name] != true &&
+                                  !consent
+                              ? null
+                              : () async {
+                                  try {
+                                    await ref
+                                        .read(launcherProvider)
+                                        .request(permission);
+                                  } catch (_) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(s['error'])),
+                                      );
+                                    }
+                                  }
+                                  ref.invalidate(permissionProvider);
+                                },
                           child: Text(
                             s[status[permission.name] == true
                                 ? 'granted'
@@ -94,8 +115,8 @@ class PermissionWizard extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // Phase 1 does not claim containment. OEMs may not offer every grant.
-        FilledButton(onPressed: onContinue, child: Text(s['continue'])),
+        // Ordinary app permissions cannot guarantee containment. OEMs may not offer every grant.
+        FilledButton(onPressed: widget.onContinue, child: Text(s['continue'])),
       ],
     );
   }
