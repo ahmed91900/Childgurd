@@ -22,7 +22,7 @@ firebase/rules-tests/node_modules/.bin/firebase emulators:exec \
   --config firebase/firebase.json 'npm --prefix firebase/rules-tests test'
 ```
 
-These tests exercise 14 Firestore rule cases, 8 actual callable-function integrations and 4 Storage rule cases, including denial paths. They use only `demo-kidsafe`, not your live project. Emulator notifications are intentionally suppressed. The APK is not automatically routed to localhost emulators; these are server tests, not end-to-end Android networking tests. On a proxy-controlled machine the emulator processes/local calls need direct loopback networking; predownload emulator binaries with the approved network path first.
+These tests exercise 17 Firestore rule cases, 9 actual callable-function integrations and 4 Storage rule cases, including denial paths. They use only `demo-kidsafe`, not your live project. Emulator notifications are intentionally suppressed. The APK is not automatically routed to localhost emulators; these are server tests, not end-to-end Android networking tests. On a proxy-controlled machine the emulator processes/local calls need direct loopback networking; predownload emulator binaries with the approved network path first.
 
 ## 3. Deploy to your chosen project
 
@@ -87,3 +87,13 @@ Sign out/back in to refresh the token. The owner section appears in the parent c
 Configure and disclose retention for cloud progress/requests, expired pairing codes and pairing-rate records; the beta does not automatically delete old cloud history. Local details are bounded to 30 days. Implement an operator-reviewed export/guardian-request process. Account deletion is implemented and emulator-tested; local copies on other phones require local deletion. A minimal inactive server tombstone blocks late writes after deletion.
 
 Complete real-device FCM/background/reconnect tests, adversarial client testing, signing, hosted privacy/account-deletion support, verified guardian requirements, consent withdrawal and Store policy review. Emulator success is not proof of production delivery, legal compliance or child-proof Android containment.
+
+## Google sign-in configuration for backup
+
+1. Enable the **Google** sign-in provider in Firebase Auth and choose the project's support email.
+2. Register the exact APK signing certificate's **SHA-1** (and SHA-256 where applicable) on the Android Firebase app. Get the public fingerprints with `apksigner verify --print-certs YOUR_APK.apk`. Each CI beta uses a generated debug key; register the actual configured beta's fingerprint. Production must use your stable private signing key/Play signing certificate.
+3. Copy the **Web OAuth client ID**, ending in `.apps.googleusercontent.com`, into `GOOGLE_WEB_CLIENT_ID` in ignored `firebase-config.json`, alongside `FIREBASE_CONFIG`. This is a public client identifier, not a client secret. Do not share service-account keys or OAuth client secrets.
+4. Deploy the updated Firestore rules; `families/{parentUid}/backups/latest` is readable/writable only by that verified active parent. Child identities cannot read the complete family backup. The backup contains a versioned learning ledger and server timestamp, never device PINs, hashes or pairing/upload-queue metadata. Storage rules are unrelated to this private Firestore backup.
+5. Rebuild with `--dart-define-from-file=firebase-config.json`, then test Google account selection, cancellation, background/child-mode races, a successful backup, uninstall/new-device restoration, offline failure/retry, and account deletion on real test phones. Local PINs are newly selected on the receiving phone.
+
+Google login and backup are not activated by a project ID alone: the Android Firebase public options, Google Web client ID, registered signing certificate, enabled provider and deployed backend/rules must match. The emulator suite tests Google-style Auth credentials, private backup access and deletion; it does not validate Google's real Android account chooser or production OAuth configuration.

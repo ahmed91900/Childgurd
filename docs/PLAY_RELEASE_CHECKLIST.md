@@ -48,3 +48,5 @@
   guide and limitations. No absolute blocking, uninstall-proof or compliance claims.
 
 No release key, production Firebase deployment, Store submission or policy approval is included in this beta. Rules, callable functions, account deletion and owner media controls are emulator-tested; production operation remains a separate release gate.
+
+- [ ] Validate Google OAuth consent branding, public Web client ID, registered production/Play signing fingerprints and provider enablement; test real-device sign-in, account switching, backup restoration and deletion. Update Data Safety/privacy disclosures for Google parent identity and opt-in family backup contents.

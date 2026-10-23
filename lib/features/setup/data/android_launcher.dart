@@ -31,6 +31,9 @@ class AndroidLauncher {
     }).toList();
   }
 
+  Future<void> enterKidMode() => _channel.invokeMethod<void>('enterKidMode');
+  Future<void> endParentExternal() =>
+      _channel.invokeMethod<void>('endParentExternal');
   Future<void> beginParentExternal() =>
       _channel.invokeMethod<void>('beginParentExternal');
   Future<void> speechSettings() =>

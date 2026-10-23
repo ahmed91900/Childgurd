@@ -135,7 +135,11 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
     if (!mounted || epoch != _epoch) return;
     if (mode == PhoneMode.kid) await ref.read(cloudProvider).enterKid();
     if (!mounted || epoch != _epoch) return;
-    await _device.setKidMode(mode != PhoneMode.parent);
+    if (mode == PhoneMode.kid) {
+      await _device.enterKidMode();
+    } else {
+      await _device.setKidMode(false);
+    }
     if (!mounted || epoch != _epoch) {
       await _device.setKidMode(true);
       return;
@@ -151,16 +155,23 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
     });
   });
 
-  Future<void> _savePins(String current, String parent, String kid) => _run((
-    epoch,
-  ) async {
-    await _access.changePins(currentParent: current, parent: parent, kid: kid);
-    if (!mounted || epoch != _epoch) return;
-    setState(() {
-      _screen = _Screen.permissions;
-      _error = null;
+  Future<bool> _savePins(String current, String parent, String kid) async {
+    var saved = false;
+    await _run((epoch) async {
+      await _access.changePins(
+        currentParent: current,
+        parent: parent,
+        kid: kid,
+      );
+      if (!mounted || epoch != _epoch) return;
+      saved = true;
+      setState(() {
+        _screen = _Screen.permissions;
+        _error = null;
+      });
     });
-  });
+    return saved;
+  }
 
   void _lock({bool parentOnly = false}) {
     setState(() {
@@ -170,7 +181,7 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
     });
     _pin.clear();
     unawaited(
-      _device.setKidMode(true).catchError((Object _) {
+      _device.enterKidMode().catchError((Object _) {
         if (mounted) setState(() => _error = 'error');
       }),
     );
@@ -297,6 +308,7 @@ class _LauncherShellState extends ConsumerState<LauncherShell>
       case _Screen.pins:
         return [
           ChangePinsForm(
+            firstSetup: !_access.configured,
             busy: _busy || _access.remaining > Duration.zero,
             submit: _savePins,
           ),

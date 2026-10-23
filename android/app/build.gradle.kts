@@ -36,6 +36,7 @@ android {
                 "apiKey" to "google_api_key", "projectId" to "project_id").forEach { (key, resource) ->
                 resValue("string", resource, requireNotNull(firebaseValues[key]).toString())
             }
+            firebaseValues["storageBucket"]?.let { resValue("string", "google_storage_bucket", it.toString()) }
         }
     }
     // Release signing must be supplied privately before Play distribution.

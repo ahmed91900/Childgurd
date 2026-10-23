@@ -2,7 +2,7 @@
 
 ## Download and installation
 
-Download `KidSafe-Launcher-universal-beta.apk` from [GitHub Releases](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1). Android 7.0+ is required. The universal APK includes armeabi-v7a, arm64-v8a and x86_64. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
+Download `KidSafe-Launcher-universal-beta.apk` from [GitHub Releases](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.3-beta.1). Android 7.0+ is required. The universal APK includes armeabi-v7a, arm64-v8a and x86_64. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
 
 Open the APK from Downloads. Android may ask you to allow installation from the browser/file manager. That grant only allows installation; it is separate from KidSafe's permissions. Do not disable Play Protect. Keep an alternative launcher available during testing.
 
@@ -10,7 +10,7 @@ Open the APK from Downloads. Android may ask you to allow installation from the 
 
 1. Choose English, বাংলা or العربية from the language menu. Arabic uses RTL.
 2. Read the privacy policy and parental consent. These disclosures do not independently verify legal guardianship.
-3. Enter initial parent PIN `1020`. Choose two different PINs of 4–12 digits and confirm each. Neither `1020` nor `0000` may be retained. Longer private PINs are better.
+3. Set **Parent PIN** and **Kids PIN** using the two fields. Choose different PINs of 4–12 digits; the eye buttons let you check the entries. Reserved defaults `1020` and `0000` are not allowed. Longer private PINs are better. There is no current-PIN or confirmation field on first setup. Changing existing PINs asks for the current parent PIN in a separate step.
 4. Work through Android settings below. Returning from an external screen locks the parent space; enter the new parent PIN again. A child PIN never authorizes the parent dashboard.
 5. Complete setup even if an optional permission is unavailable. Missing/revoked permissions are visible; do not rely on restrictions when required grants are absent.
 
@@ -56,3 +56,13 @@ Install Flutter 3.35.7, JDK 21 and Android SDK platform 36, build-tools 35.0.0, 
 ## Compatibility
 
 Use the universal APK so Android can select the matching native code for armeabi-v7a (32-bit ARM), arm64-v8a or x86_64. The minimum is Android 7.0 / API 24, matching the video-player plugin. Android 6 and earlier and 32-bit x86 are unsupported. iOS cannot install APKs or use this Android launcher model. A compatible architecture/version does not guarantee an OEM permits every parental-control feature. Offline voices, video decoding and permissions need device testing, especially older/low-memory phones.
+
+## Google sign-in, backup and restore
+
+This source includes optional Google-linked Firebase backup. The public APK cannot connect until the operator supplies Firebase/Google configuration. In a configured build, use **Continue with Google** in the parent dashboard. Choosing to connect authorizes backing up learning profiles, tasks, progress and drawings to the parent's private family record. It does not request Google Drive access or back up device PINs/hashes.
+
+On a new phone, first choose its local Parent/Kids PINs, then sign in with the same Google account. An existing backup is read before any new snapshot is written, so an empty installation cannot erase it. Learning data is restored automatically for a fresh installation. **Restore learning data** can also merge an existing backup later, retaining larger existing progress/time counters and unioning completion IDs. Configuration comes from the backup; this is not a collaborative multi-device editor. Reassign additional profile PINs using **Set Kids PIN on this phone** in the parent dashboard.
+
+Connected parent sessions save changed learning data during sync and check for a changed backup approximately every minute while the app can run. **Back up now** requests an acknowledged online write. The saved indicator appears only after success. Entering Kids Mode signs out unrestricted parent Auth: new offline learning needs the parent to connect again before it becomes recoverable online. Data created after the last successful backup is not recoverable if the phone is erased/lost. Backups are limited to 900 KB; local detailed history is retained for 30 days, with all-time points preserved. Account deletion removes the backup as well as the online family.
+
+A Google account is not a substitute for the device Parent PIN. The screen locks after external account selection; unlock again with the local Parent PIN to view restored data. Cancelled or stale sign-ins cannot authorize the parent launcher screen.

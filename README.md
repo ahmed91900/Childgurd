@@ -1,12 +1,12 @@
 <p align="center"><img src="docs/assets/kidsafe-banner.svg" alt="KidSafe Launcher — a thoughtful start for family screen time" width="100%" /></p>
 <p align="center"><strong>An offline learning space with a private parent dashboard.</strong><br />Flutter · Kotlin · English · বাংলা · العربية</p>
-<p align="center"><a href="https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
+<p align="center"><a href="https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.3-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
 
 ## Learn, play, and grow together
 
 KidSafe Launcher gives children original learning activities instead of an open social-media feed. A parent PIN opens the family dashboard and the phone's app list; each child PIN opens a learning space. Local learning and same-phone parental controls work without an account or internet connection.
 
-**v0.2 is an installable development beta for supervised testing, not a Play Store production release.** The universal APK targets Android 7.0 and later, with 32-bit ARM, 64-bit ARM and x86-64 included. It is debug signed. Separate-phone control and owner-managed advertising are implemented in source and tested against Firebase emulators, but are **not activated in this APK**: no production Firebase project or advertising account was supplied. See [Firebase setup](docs/FIREBASE_SETUP.md).
+**v0.2 is an installable development beta for supervised testing, not a Play Store production release.** The universal APK targets Android 7.0 and later, with 32-bit ARM, 64-bit ARM and x86-64 included. It is debug signed. Separate-phone control and owner-managed advertising are implemented in source and tested against Firebase emulators, but are **not activated in this APK**: no production Firebase project, Google OAuth client or advertising account was supplied. Google backup is also unavailable in this public build until that setup is supplied. See [Firebase setup](docs/FIREBASE_SETUP.md).
 
 ## What's inside
 
@@ -19,6 +19,7 @@ KidSafe Launcher gives children original learning activities instead of an open 
 | Family dashboard | Up to eight local child profiles, individual PINs, today's/week's progress, custom scheduled tasks and per-child library switches |
 | Screen-time controls | Foreground play/story/video allowance, task-before-play gate, request-more-time and parent decisions |
 | Parent-approved media | Direct HTTPS MP4 links only, deliberate playback; no browser, public feed, Shorts, comments or looping |
+| Google-linked backup | Optional Google sign-in, private learning backup and automatic restore on a fresh phone; requires Firebase/Google setup; PINs stay local |
 | PIN protection | Salted PBKDF2 hashes, Android Keystore AES-GCM vaults, mandatory default-PIN replacement, persistent five-attempt lockout |
 | Android setup | Home selection, Device Admin and Accessibility guidance, permission-revocation warning, optional overlay/usage status |
 | Separate parent phone | Verified parent Auth, one-time anonymous child-device pairing, Firestore assignment/progress sync, persistent offline outbox and backend FCM hints; requires deployment |
@@ -29,9 +30,9 @@ Audio needs an installed **offline** voice for the chosen language. The app expl
 
 ## Install and try it
 
-1. Open the [beta release](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1) on an Android 7.0+ phone and download `KidSafe-Launcher-universal-beta.apk` from **Assets**.
+1. Open the [beta release](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.3-beta.1) on an Android 7.0+ phone and download `KidSafe-Launcher-universal-beta.apk` from **Assets**.
 2. Open the downloaded APK and allow installation from that source when Android asks. Read the beta limitations before enabling launcher permissions.
-3. Choose English or বাংলা, read parental consent/privacy, use initial parent PIN **1020**, and replace **both** default PINs. The initial child PIN **0000** cannot remain in use.
+3. Choose English or বাংলা, read parental consent/privacy, then set **Parent PIN** and **Kids PIN**. There are only two fields; use the eye icons to check what you typed. Choose different PINs of 4–12 digits.
 4. Follow the permission guide. Enter the new parent PIN when returning from Android settings.
 5. Use the parent dashboard to set the child's age, activities and allowance. Lock the launcher and enter the child PIN to learn.
 
@@ -64,8 +65,8 @@ lib/features/learning/      Activities, alphabet book, original stories and medi
 lib/features/cloud/         Scoped Firebase sync, parent pairing and owner ads
 lib/l10n/                   English, Bangla and Arabic
 android/                    Kotlin vaults, launcher boundary, offline TTS and Accessibility
-firebase/                   Firestore/Storage rules, trusted functions and 26 emulator tests
-test/                       51 Flutter unit/widget tests
+firebase/                   Firestore/Storage rules, trusted functions and 30 emulator tests
+test/                       59 Flutter unit/widget tests
 ```
 
 ## Honest protection boundaries

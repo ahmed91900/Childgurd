@@ -24,6 +24,7 @@ class FamilyHub extends ConsumerStatefulWidget {
 
 class _FamilyHubState extends ConsumerState<FamilyHub> {
   String _selected = 'child';
+  int _restoreRevision = 0;
   String _page = 'home';
   bool _adding = false;
   String? _message;
@@ -190,6 +191,17 @@ class _FamilyHubState extends ConsumerState<FamilyHub> {
             : Text(s['storage']),
       );
     }
+    if (widget.parent && _restoreRevision != repo.restoreRevision) {
+      _restoreRevision = repo.restoreRevision;
+      _selected = 'child';
+      _adding = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _fields[5].clear();
+        _fields[6].clear();
+        _fill();
+      });
+    }
     if (!f.children.any((c) => c.id == _id)) return Text(s['storage']);
     final c = f.child(_id), today = f.day(_id, _date);
     return Column(
@@ -278,6 +290,30 @@ class _FamilyHubState extends ConsumerState<FamilyHub> {
         icon: const Icon(Icons.volume_up),
         label: Text(s['voiceSettings']),
       ),
+      if (!_adding && c.id != 'child')
+        ExpansionTile(
+          title: Text(s['setChildPin']),
+          children: [
+            PinField(controller: _fields[5], label: s['parentPinLabel']),
+            PinField(controller: _fields[6], label: s['kidsPinLabel']),
+            FilledButton(
+              onPressed: () => _action(() async {
+                await ref
+                    .read(accessProvider)
+                    .setChildPin(
+                      currentParent: _fields[5].text,
+                      id: c.id,
+                      pin: _fields[6].text,
+                    );
+                if (mounted) {
+                  _fields[5].clear();
+                  _fields[6].clear();
+                }
+              }),
+              child: Text(s['saveSimplePins']),
+            ),
+          ],
+        ),
       Text(s['profile'], style: Theme.of(context).textTheme.titleLarge),
       _field(0, s['name']),
       _field(1, s['age'], number: true),
@@ -285,8 +321,8 @@ class _FamilyHubState extends ConsumerState<FamilyHub> {
       _field(3, s['dailyLimit'], number: true),
       _field(4, s['requiredTasks'], number: true),
       if (_adding) ...[
-        PinField(controller: _fields[5], label: s['currentParent']),
-        PinField(controller: _fields[6], label: s['childPin']),
+        PinField(controller: _fields[5], label: s['parentPinLabel']),
+        PinField(controller: _fields[6], label: s['kidsPinLabel']),
       ],
       FilledButton(
         onPressed: _repo.busy
@@ -515,7 +551,7 @@ class _FamilyHubState extends ConsumerState<FamilyHub> {
           ),
         ),
       const SizedBox(height: 24),
-      PinField(controller: _fields[13], label: s['currentParent']),
+      PinField(controller: _fields[13], label: s['parentPinLabel']),
       OutlinedButton(
         onPressed: _repo.busy
             ? null

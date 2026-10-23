@@ -470,4 +470,67 @@ const learningStrings = <String, List<String>>{
     "رفع الملف المختار",
     "বাছাই করা ফাইল আপলোড করুন",
   ],
+  'simplePinTitle': ['Set your PINs', 'إعداد الرموز', 'পিন সেট করুন'],
+  'simplePinHelp': [
+    'Choose one PIN for you and another for your child.',
+    'اختر رمزاً لك وآخر لطفلك.',
+    'আপনার জন্য একটি, শিশুর জন্য আরেকটি পিন দিন।',
+  ],
+  'parentPinLabel': ['Parent PIN', 'رمز ولي الأمر', 'অভিভাবকের পিন'],
+  'kidsPinLabel': ['Kids PIN', 'رمز الطفل', 'শিশুর পিন'],
+  'saveSimplePins': ['Save PINs', 'حفظ الرموز', 'পিন সেভ করুন'],
+  'showPin': ['Show PIN', 'إظهار الرمز', 'পিন দেখুন'],
+  'hidePin': ['Hide PIN', 'إخفاء الرمز', 'পিন লুকান'],
+  'authorizePinChange': [
+    'Enter your current Parent PIN',
+    'أدخل رمز ولي الأمر الحالي',
+    'বর্তমান অভিভাবকের পিন দিন',
+  ],
+
+  'continueGoogle': [
+    'Continue with Google',
+    'المتابعة مع Google',
+    'Google দিয়ে চালিয়ে যান',
+  ],
+  'googleBackupHelp': [
+    'Optional backup saves profiles, tasks, progress and drawings to your Google-linked account. PINs stay on this phone. Sign in on a new phone to restore your learning data.',
+    'النسخ الاختياري يحفظ الملفات والمهام والتقدم والرسومات في حسابك المرتبط بـ Google. تبقى الرموز على الهاتف. سجل الدخول على هاتف جديد لاستعادة التعلم.',
+    'ইচ্ছামতো Google অ্যাকাউন্টে প্রোফাইল, কাজ, অগ্রগতি ও আঁকা ছবি ব্যাকআপ রাখুন। পিন এই ফোনেই থাকে। নতুন ফোনে একই অ্যাকাউন্ট দিয়ে ঢুকলে শেখার তথ্য ফিরে পাবেন।',
+  ],
+  'googleSetupMissing': [
+    'Google backup is not enabled in this build. Offline learning still works.',
+    'نسخ Google غير مفعّل في هذا الإصدار. يعمل التعلم دون اتصال.',
+    'এই সংস্করণে Google ব্যাকআপ চালু করা হয়নি। অফলাইনে শেখা চলবে।',
+  ],
+  'useEmailInstead': [
+    'Use email instead',
+    'استخدام البريد بدلاً من ذلك',
+    'ইমেইল ব্যবহার করুন',
+  ],
+  'backupNow': ['Back up now', 'نسخ احتياطي الآن', 'এখন ব্যাকআপ রাখুন'],
+  'restoreBackup': [
+    'Restore learning data',
+    'استعادة بيانات التعلم',
+    'শেখার তথ্য ফিরিয়ে আনুন',
+  ],
+  'backupSaved': [
+    'Backup saved online',
+    'حُفظت النسخة عبر الإنترنت',
+    'অনলাইনে ব্যাকআপ রাখা হয়েছে',
+  ],
+  'backupError': [
+    'Backup could not finish. Your offline data is still on this phone; try again online.',
+    'لم يكتمل النسخ. بياناتك المحلية باقية؛ حاول عند الاتصال.',
+    'ব্যাকআপ শেষ হয়নি। অফলাইনের তথ্য ফোনেই আছে; অনলাইনে আবার চেষ্টা করুন।',
+  ],
+  'setChildPin': [
+    'Set Kids PIN on this phone',
+    'تعيين رمز الطفل على هذا الهاتف',
+    'এই ফোনে শিশুর পিন ঠিক করুন',
+  ],
+  'backupPrivacy': [
+    'Optional Google sign-in shares basic parent account identity with Firebase. With your choice to connect, a private Firebase backup stores learning profiles, tasks, progress and drawings, not device PINs or PIN hashes. No Google Drive access is requested. Backups need internet and a connected parent session; new offline work is not recoverable until successfully backed up. Deleting the online family also deletes its backup. On another phone, choose new local PINs before restoring.',
+    'تسجيل Google اختياري ويشارك هوية حساب ولي الأمر مع Firebase. عند الاتصال تحفظ نسخة خاصة الملفات والمهام والتقدم والرسومات، دون الرموز أو تجزئاتها، ولا نطلب الوصول إلى Google Drive. يلزم الإنترنت وجلسة ولي أمر متصلة. حذف العائلة يحذف النسخة. اختر رموزاً محلية جديدة على الهاتف الآخر.',
+    'ইচ্ছামতো Google দিয়ে ঢুকলে অভিভাবকের সাধারণ অ্যাকাউন্ট পরিচয় Firebase-এ যায়। সংযোগ করলে ব্যক্তিগত ব্যাকআপে প্রোফাইল, কাজ, অগ্রগতি ও আঁকা ছবি থাকে; পিন বা পিনের হ্যাশ থাকে না। Google Drive-এর অনুমতি চাওয়া হয় না। ইন্টারনেট ও সংযুক্ত অভিভাবকের সেশন দরকার। ব্যাকআপ সফল না হওয়া পর্যন্ত নতুন অফলাইন কাজ হারিয়ে গেলে ফেরানো যাবে না। অনলাইন পরিবার মুছলে ব্যাকআপও মুছে যায়। অন্য ফোনে আগে নতুন স্থানীয় পিন বাছুন।',
+  ],
 };

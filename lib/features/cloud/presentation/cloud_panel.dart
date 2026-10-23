@@ -101,17 +101,22 @@ class _CloudPanelState extends ConsumerState<CloudPanel> {
               if (cloud.error != null) Text(s[cloud.error!]),
               if (cloud.role.isEmpty) ...[
                 Text(s['cloudHelp']),
-                _field(_email, s['email']),
-                _field(_password, s['password'], secret: true),
-                FilledButton(
-                  onPressed: _busy
+                Text(s['googleBackupHelp']),
+                FilledButton.icon(
+                  icon: const Icon(Icons.account_circle_outlined),
+                  label: Text(s['continueGoogle']),
+                  onPressed: _busy || !cloud.googleConfigured
                       ? null
                       : () => _run(() async {
-                          await cloud.parentLogin(
-                            _email.text.trim(),
-                            _password.text,
-                          );
-                          final token = await cloud.auth.currentUser!
+                          final service = cloud;
+                          final launcher = ref.read(launcherProvider);
+                          await launcher.beginParentExternal();
+                          try {
+                            await service.parentGoogleLogin();
+                          } finally {
+                            await launcher.endParentExternal();
+                          }
+                          final token = await service.auth.currentUser!
                               .getIdTokenResult();
                           if (mounted) {
                             setState(
@@ -119,21 +124,46 @@ class _CloudPanelState extends ConsumerState<CloudPanel> {
                             );
                           }
                         }),
-                  child: Text(s['signIn']),
                 ),
-                TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () => _run(
-                          () => cloud.parentLogin(
-                            _email.text.trim(),
-                            _password.text,
-                            create: true,
-                          ),
-                        ),
-                  child: Text(s['createAccount']),
+                if (!cloud.googleConfigured) Text(s['googleSetupMissing']),
+                ExpansionTile(
+                  title: Text(s['useEmailInstead']),
+                  children: [
+                    _field(_email, s['email']),
+                    _field(_password, s['password'], secret: true),
+                    FilledButton(
+                      onPressed: _busy
+                          ? null
+                          : () => _run(() async {
+                              await cloud.parentLogin(
+                                _email.text.trim(),
+                                _password.text,
+                              );
+                              final token = await cloud.auth.currentUser!
+                                  .getIdTokenResult();
+                              if (mounted) {
+                                setState(
+                                  () => _owner = token.claims?['owner'] == true,
+                                );
+                              }
+                            }),
+                      child: Text(s['signIn']),
+                    ),
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => _run(
+                              () => cloud.parentLogin(
+                                _email.text.trim(),
+                                _password.text,
+                                create: true,
+                              ),
+                            ),
+                      child: Text(s['createAccount']),
+                    ),
+                    Text(s['verifyHelp']),
+                  ],
                 ),
-                Text(s['verifyHelp']),
                 const Divider(),
                 _field(_code, s['pairCode']),
                 OutlinedButton(
@@ -145,6 +175,20 @@ class _CloudPanelState extends ConsumerState<CloudPanel> {
               ] else ...[
                 Text(s[cloud.role == 'parent' ? 'parentPhone' : 'pairedPhone']),
                 Text(s['offlineSync']),
+                if (cloud.googleConnected) ...[
+                  Text(s['googleBackupHelp']),
+                  if (cloud.lastBackupAt != null) Text(s['backupSaved']),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _run(cloud.backupNow),
+                    icon: const Icon(Icons.cloud_upload_outlined),
+                    label: Text(s['backupNow']),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _run(cloud.restoreBackup),
+                    icon: const Icon(Icons.cloud_download_outlined),
+                    label: Text(s['restoreBackup']),
+                  ),
+                ],
                 OutlinedButton(
                   onPressed: _busy ? null : () => _run(cloud.flush),
                   child: Text(s['syncNow']),
@@ -175,18 +219,29 @@ class _CloudPanelState extends ConsumerState<CloudPanel> {
                 if (cloud.role == 'parent') ...[
                   const Divider(),
                   Text(s['deleteHelp']),
-                  _field(_password, s['password'], secret: true),
+                  if (!cloud.googleConnected)
+                    _field(_password, s['password'], secret: true),
                   OutlinedButton(
                     onPressed: _busy
                         ? null
                         : () => _run(() async {
-                            final user = cloud.auth.currentUser!;
-                            await user.reauthenticateWithCredential(
-                              EmailAuthProvider.credential(
-                                email: user.email!,
-                                password: _password.text,
-                              ),
-                            );
+                            if (cloud.googleConnected) {
+                              final launcher = ref.read(launcherProvider);
+                              await launcher.beginParentExternal();
+                              try {
+                                await cloud.reauthenticateGoogle();
+                              } finally {
+                                await launcher.endParentExternal();
+                              }
+                            } else {
+                              final user = cloud.auth.currentUser!;
+                              await user.reauthenticateWithCredential(
+                                EmailAuthProvider.credential(
+                                  email: user.email!,
+                                  password: _password.text,
+                                ),
+                              );
+                            }
                             await cloud.functions
                                 .httpsCallable('deleteFamily')
                                 .call();

@@ -128,6 +128,19 @@ class MainActivity : FlutterActivity() {
                             requestPermission(call.arguments as String)
                             result.success(null)
                         }
+                        "enterKidMode" -> {
+                            // A child PIN explicitly ends any earlier parent app/picker trip.
+                            externalSession = false
+                            kidMode = true
+                            policy(true)
+                            speech?.stop()
+                            result.success(null)
+                        }
+                        "endParentExternal" -> {
+                            externalSession = false
+                            policy(kidMode)
+                            result.success(null)
+                        }
                         "beginParentExternal" -> {
                             check(!kidMode) { "Parent authorization required" }
                             externalSession = true

@@ -28,6 +28,13 @@ service cloud.firestore {
       allow read: if parent(f);
       allow create,update: if parent(f) && request.resource.data.owner==f && request.resource.data.keys().hasOnly(['owner','updatedAt']);
       allow delete: if parent(f);
+      match /backups/{backup} {
+        allow read,delete: if parent(f);
+        allow create,update: if parent(f) && backup == 'latest' &&
+          request.resource.data.keys().hasOnly(['schema','payload','updatedAt']) &&
+          request.resource.data.schema == 1 && request.resource.data.payload is string &&
+          request.resource.data.payload.size() <= 900000 && request.resource.data.updatedAt == request.time;
+      }
       match /children/{c} {
         allow read: if parent(f)||device(f,c);
         allow create,update: if parent(f) &&

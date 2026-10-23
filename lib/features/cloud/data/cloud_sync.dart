@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../../backup/domain/family_backup.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:convert';
@@ -13,6 +15,7 @@ import '../../family/data/family_repository.dart';
 import '../../family/domain/family.dart';
 
 const firebaseConfig = String.fromEnvironment('FIREBASE_CONFIG');
+const googleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 final cloudProvider = ChangeNotifierProvider(
   (ref) => CloudSync(ref.read(familyProvider)),
 );
@@ -62,6 +65,129 @@ class CloudSync extends ChangeNotifier {
   final _subscriptions = <StreamSubscription<dynamic>>[];
   Timer? _debounce, _retry;
   int _session = 0;
+  int _parentAuthAttempt = 0;
+  static Future<void>? _googleInitialization;
+  Timer? _backupTimer;
+  Future<void>? _backupWrite;
+  String? _lastBackupKey;
+  DateTime? lastBackupAt;
+  bool _googleSession = false;
+  bool get googleConfigured => configured && googleWebClientId.isNotEmpty;
+  bool get googleConnected =>
+      _googleSession &&
+      initialized &&
+      role == 'parent' &&
+      auth.currentUser?.providerData.any((p) => p.providerId == 'google.com') ==
+          true;
+
+  Future<void> _guardLogin(int attempt, String uid) async {
+    if (attempt != _parentAuthAttempt || auth.currentUser?.uid != uid) {
+      if (auth.currentUser?.uid == uid) await auth.signOut();
+      throw StateError('Sign-in cancelled');
+    }
+  }
+
+  Future<void> parentGoogleLogin() async {
+    final attempt = ++_parentAuthAttempt;
+    await initialize();
+    if (!initialized) throw StateError('Firebase is not configured');
+    if (attempt != _parentAuthAttempt) throw StateError('Sign-in cancelled');
+    if (!googleConfigured) throw StateError('Google sign-in is not configured');
+    await _clearSession();
+    if (attempt != _parentAuthAttempt) throw StateError('Sign-in cancelled');
+    _googleInitialization ??= GoogleSignIn.instance.initialize(
+      serverClientId: googleWebClientId,
+    );
+    await _googleInitialization;
+    final account = await GoogleSignIn.instance.authenticate();
+    if (attempt != _parentAuthAttempt) throw StateError('Sign-in cancelled');
+    final token = account.authentication.idToken;
+    if (token == null) throw StateError('Google did not return an ID token');
+    final credential = await auth.signInWithCredential(
+      GoogleAuthProvider.credential(idToken: token),
+    );
+    await _guardLogin(attempt, credential.user!.uid);
+    await _finishParentLogin(credential, attempt, restore: true);
+  }
+
+  Future<void> reauthenticateGoogle() async {
+    final user = auth.currentUser;
+    if (user == null || !googleConnected) throw StateError('Sign in first');
+    final attempt = _parentAuthAttempt;
+    final account = await GoogleSignIn.instance.authenticate();
+    if (attempt != _parentAuthAttempt || auth.currentUser?.uid != user.uid) {
+      throw StateError('Sign-in cancelled');
+    }
+    final token = account.authentication.idToken;
+    if (token == null) throw StateError('Missing Google ID token');
+    await user.reauthenticateWithCredential(
+      GoogleAuthProvider.credential(idToken: token),
+    );
+    await _guardLogin(attempt, user.uid);
+  }
+
+  Future<void> backupNow() {
+    final previous = _backupWrite;
+    if (previous != null) return previous;
+    late final Future<void> next;
+    next = _writeBackup().whenComplete(() {
+      if (identical(_backupWrite, next)) _backupWrite = null;
+    });
+    _backupWrite = next;
+    return next;
+  }
+
+  Future<void> _writeBackup() async {
+    if (!googleConnected || local.family == null) {
+      throw StateError('Google backup is not connected');
+    }
+    final uid = auth.currentUser!.uid, session = _session;
+    if (local.family!.cloudFamily != uid ||
+        local.family!.cloudChild.isNotEmpty) {
+      throw StateError('Wrong backup account');
+    }
+    final payload = FamilyBackup.encode(local.family!);
+    final key = '$uid:$payload';
+    if (_lastBackupKey == key) return;
+    await db
+        .doc('families/$uid/backups/latest')
+        .set({
+          'schema': 1,
+          'payload': payload,
+          'updatedAt': FieldValue.serverTimestamp(),
+        })
+        .timeout(const Duration(seconds: 15));
+    if (session == _session) {
+      _lastBackupKey = key;
+      lastBackupAt = DateTime.now();
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreBackup() async {
+    if (!googleConnected) throw StateError('Sign in with Google first');
+    final uid = auth.currentUser!.uid, session = _session;
+    final snapshot = await db
+        .doc('families/$uid/backups/latest')
+        .get(const GetOptions(source: Source.server));
+    if (session != _session || auth.currentUser?.uid != uid) {
+      throw StateError('Sign-in changed');
+    }
+    if (!snapshot.exists) throw StateError('No backup yet');
+    final record = snapshot.data()!;
+    if (record['schema'] != 1) throw const FormatException('Unknown backup');
+    final backup = FamilyBackup.decode(record['payload'] as String);
+    await local.remoteUpdate((f) {
+      if (session != _session) return;
+      backup.mergeInto(f);
+      f.cloudFamily = uid;
+      f.cloudChild = '';
+    });
+    if (session == _session) local.markRestored();
+    _lastBackupKey = null;
+    _localChanged();
+  }
+
   bool _receiving = false;
   bool get synchronizing => working || _receiving;
   bool _dirty = false;
@@ -114,15 +240,12 @@ class CloudSync extends ChangeNotifier {
     String password, {
     bool create = false,
   }) async {
+    final attempt = ++_parentAuthAttempt;
     await initialize();
     if (!initialized) throw StateError('Firebase is not configured');
-    _session++;
-    pendingMedia = null;
-    pendingMediaOwner = null;
-    for (final sub in _subscriptions) {
-      await sub.cancel();
-    }
-    _subscriptions.clear();
+    if (attempt != _parentAuthAttempt) throw StateError('Sign-in cancelled');
+    await _clearSession();
+    if (attempt != _parentAuthAttempt) throw StateError('Sign-in cancelled');
     final credential = create
         ? await auth.createUserWithEmailAndPassword(
             email: email,
@@ -132,29 +255,76 @@ class CloudSync extends ChangeNotifier {
             email: email,
             password: password,
           );
+    await _guardLogin(attempt, credential.user!.uid);
+    await _finishParentLogin(credential, attempt);
+  }
+
+  Future<void> _finishParentLogin(
+    UserCredential credential,
+    int attempt, {
+    bool restore = false,
+  }) async {
     final user = credential.user!;
     await user.reload();
+    await _guardLogin(attempt, user.uid);
     if (!auth.currentUser!.emailVerified) {
       await user.sendEmailVerification();
       throw StateError('Verify your email and sign in again.');
     }
-    await auth.currentUser!.getIdToken(true);
+    await user.getIdToken(true);
+    await _guardLogin(attempt, user.uid);
     await functions.httpsCallable('registerParent').call();
-    familyId = user.uid;
+    await _guardLogin(attempt, user.uid);
+    final shouldRestore =
+        restore &&
+        (local.family?.cloudFamily != user.uid ||
+            local.family?.cloudChild.isNotEmpty == true);
+    FamilyBackup? backup;
+    if (shouldRestore) {
+      // Server read completes before the first write: an empty installation
+      // cannot replace an existing backup while offline or during sign-in.
+      final snap = await db
+          .doc('families/${user.uid}/backups/latest')
+          .get(const GetOptions(source: Source.server));
+      await _guardLogin(attempt, user.uid);
+      if (snap.exists) {
+        if (snap.data()!['schema'] != 1) {
+          throw const FormatException('Unknown backup');
+        }
+        backup = FamilyBackup.decode(snap.data()!['payload'] as String);
+      }
+    }
     await local.remoteUpdate((f) {
+      if (attempt != _parentAuthAttempt) return;
       if (f.cloudFamily.isNotEmpty &&
-          (f.cloudFamily != familyId || f.cloudChild.isNotEmpty)) {
+          (f.cloudFamily != user.uid || f.cloudChild.isNotEmpty)) {
         f.clearLearning();
       }
-      f.cloudFamily = familyId;
+      backup?.mergeInto(f);
+      f.cloudFamily = user.uid;
       f.cloudChild = '';
     });
+    await _guardLogin(attempt, user.uid);
+    local.markRestored();
+    familyId = user.uid;
     role = 'parent';
+    _googleSession = restore;
     await db.doc('families/$familyId').set({
       'owner': user.uid,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    await _guardLogin(attempt, user.uid);
     await _listen();
+    await _guardLogin(attempt, user.uid);
+    if (googleConnected) {
+      _backupTimer?.cancel();
+      _backupTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+        backupNow().catchError((Object _) {
+          error = 'backupError';
+          notifyListeners();
+        });
+      });
+    }
     await flush();
   }
 
@@ -532,6 +702,7 @@ class CloudSync extends ChangeNotifier {
               )
               .timeout(const Duration(seconds: 15));
         }
+        if (session == _session && googleConnected) await backupNow();
       } else {
         final uid = auth.currentUser!.uid;
         for (final entry in f.days.entries.where(
@@ -606,6 +777,7 @@ class CloudSync extends ChangeNotifier {
   }
 
   Future<void> enterKid() async {
+    _parentAuthAttempt++;
     try {
       await initialize();
     } catch (_) {
@@ -620,6 +792,16 @@ class CloudSync extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    _parentAuthAttempt++;
+    await _clearSession();
+  }
+
+  Future<void> _clearSession() async {
+    _googleSession = false;
+    _backupWrite = null;
+    _backupTimer?.cancel();
+    _lastBackupKey = null;
+    lastBackupAt = null;
     pendingMedia = null;
     pendingMediaOwner = null;
     _session++;
@@ -645,6 +827,8 @@ class CloudSync extends ChangeNotifier {
 
   @override
   void dispose() {
+    _parentAuthAttempt++;
+    _backupTimer?.cancel();
     local.removeListener(_localChanged);
     _debounce?.cancel();
     _retry?.cancel();

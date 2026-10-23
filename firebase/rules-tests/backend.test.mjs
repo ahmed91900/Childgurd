@@ -4,7 +4,8 @@ import {initializeApp as adminApp,deleteApp as deleteAdminApp} from 'firebase-ad
 import {getAuth as adminAuth} from 'firebase-admin/auth';
 import {getFirestore} from 'firebase-admin/firestore';
 import {initializeApp,deleteApp} from 'firebase/app';
-import {getAuth,connectAuthEmulator,signInWithEmailAndPassword,signInAnonymously,getIdToken} from 'firebase/auth';
+import {getAuth,connectAuthEmulator,signInWithEmailAndPassword,signInAnonymously,getIdToken,signInWithCredential,GoogleAuthProvider} from 'firebase/auth';
+import {getFirestore as clientFirestore,connectFirestoreEmulator,doc,setDoc,getDoc,serverTimestamp} from 'firebase/firestore';
 import {getFunctions,connectFunctionsEmulator,httpsCallable} from 'firebase/functions';
 
 let admin,db,parent,child,second,bad,guest;
@@ -13,7 +14,7 @@ function client(name){
   const app=initializeApp({apiKey:'demo-key',appId:'demo-app',projectId:'demo-kidsafe'},name);apps.push(app);
   const auth=getAuth(app);connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});
   const functions=getFunctions(app,'us-central1');connectFunctionsEmulator(functions,'127.0.0.1',5001);
-  return {auth,call:(name,data)=>httpsCallable(functions,name)(data)};
+  return {app,auth,call:(name,data)=>httpsCallable(functions,name)(data)};
 }
 before(async()=>{
   admin=adminApp({projectId:'demo-kidsafe'},'backend-tests');db=getFirestore(admin);
@@ -70,9 +71,29 @@ test('revoked child cannot register a push token',async()=>{
   assert.deepEqual((await db.doc(`privatePush/${second.auth.currentUser.uid}`).get()).data().tokens,['emulator-only-token']);
 });
 test('account deletion revokes devices, removes online data and tombstones registration',async()=>{
+  await db.doc('families/integration-parent/backups/latest').set({schema:1,payload:'{}'});
   await parent.call('deleteFamily');
   assert.equal((await db.doc('families/integration-parent').get()).exists,false);
+  assert.equal((await db.doc('families/integration-parent/backups/latest').get()).exists,false);
   assert.equal((await db.doc(`devices/${second.auth.currentUser.uid}`).get()).exists,false);
   assert.equal((await db.doc('parentAccounts/integration-parent').get()).data().active,false);
   await assert.rejects(adminAuth(admin).getUser('integration-parent'),{code:'auth/user-not-found'});
+});
+
+test('Google identity can register, recover its private backup and delete it',async()=>{
+  const google=client('google-backup');
+  // Unsigned fake Google tokens are accepted only by the connected Auth emulator.
+  const header=Buffer.from(JSON.stringify({alg:'none',typ:'JWT'})).toString('base64url');
+  const payload=Buffer.from(JSON.stringify({sub:'emulated-google-backup',email:'google-backup@example.test',email_verified:true})).toString('base64url');
+  const credential=await signInWithCredential(google.auth,GoogleAuthProvider.credential(`${header}.${payload}.`));
+  assert.equal(credential.user.emailVerified,true);
+  await google.call('registerParent');
+  const uid=credential.user.uid;
+  const store=clientFirestore(google.app);connectFirestoreEmulator(store,'127.0.0.1',8080);
+  await setDoc(doc(store,`families/${uid}`),{owner:uid,updatedAt:serverTimestamp()});
+  const backup=doc(store,`families/${uid}/backups/latest`);
+  await setDoc(backup,{schema:1,payload:'{"version":1,"language":"bn"}',updatedAt:serverTimestamp()});
+  assert.equal((await getDoc(backup)).data().payload,'{"version":1,"language":"bn"}');
+  await google.call('deleteFamily');
+  assert.equal((await db.doc(`families/${uid}/backups/latest`).get()).exists,false);
 });

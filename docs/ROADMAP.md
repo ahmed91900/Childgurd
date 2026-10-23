@@ -13,3 +13,5 @@ Before a production release:
 Not currently implemented: device-wide adult-content/network filtering, guaranteed kiosk containment, YouTube/channel embeds, offline video downloading, a general allowed-external-app editor for child mode, downloadable/bundled narration, arbitrary multi-device collaborative configuration, remote erasure of offline copies, or monetization activated without owner configuration. Parent mode can launch normal phone apps; child mode exposes only KidSafe and necessary trusted system/keyboard surfaces.
 
 The [Phase 1 report](PHASE1_VALIDATION.md) is historical. See [current validation](VALIDATION.md) for v0.2 evidence.
+
+The v0.2.3 source adds a two-field first-run PIN screen and optional Google-linked backups/restore. Public beta cloud backup stays disabled until operator Firebase/OAuth/signing configuration is supplied. Real Google chooser/recovery tests remain a production gate.

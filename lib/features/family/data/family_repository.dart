@@ -26,6 +26,12 @@ class FamilyRepository extends ChangeNotifier {
   Object? error;
   bool busy = false;
   bool fromRemote = false;
+  int restoreRevision = 0;
+  void markRestored() {
+    restoreRevision++;
+    notifyListeners();
+  }
+
   Future<void> _queue = Future<void>.value();
   Future<void>? _loading;
 

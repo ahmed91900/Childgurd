@@ -6,7 +6,7 @@ checks is claimed as passed merely because an APK builds. Use test data only.
 | Area | Required manual checks |
 | --- | --- |
 | OS/OEM matrix | API 24, 25, 26, 29, 31, 33, 35, 36; Pixel plus Samsung and at least one restrictive OEM; low-memory/low-end device; 32-bit ARM and 64-bit ARM phones, x86-64 emulator/tablet; devices without Google Play services |
-| Initial setup | Consent required; `1020` challenge; both defaults rejected as replacements; mismatched confirmations; Bangla/Arabic/Persian numerals; keyboard does not obscure buttons |
+| Initial setup | Consent required; only Parent PIN and Kids PIN fields; both reserved defaults rejected; show/hide controls; separate current-parent verification when changing PINs; Bangla/Arabic/Persian numerals; keyboard does not obscure buttons |
 | Mode routing | Correct parent/child routes; wrong PIN; child PIN rejected for exit and change; installed apps launch in parent mode only |
 | Lockout | Five failures, correct PIN denied during lockout, kill/relaunch, reboot, countdown expiry, background/foreground, clock changes and timezone changes |
 | Storage | Keystore key creation, AES-GCM encrypted vault, no plaintext PIN in app files/logcat; native storage failures fail closed; backup/device-transfer exclusions |
@@ -30,3 +30,5 @@ video allowlisting, Shorts rejection and no-autoplay behavior; app-blocking race
 clock/reboot-safe daily limits; battery restrictions; permission-abuse resistance.
 
 Also test installed/missing English and Bangla offline TTS voices, picker return requiring parent PIN, manual ad upload MIME/size restrictions, owner/guardian ad toggles, no autoplay, account deletion on a live development project, local data reset, native storage near capacity, drawings and 30-day retention. No real-device, audio-quality, push-delivery, battery, Android permission, or OEM restriction result is currently recorded as passed.
+
+Google backup: configure a test project's OAuth ID and the exact signing SHA; exercise Google chooser cancel/success, parent reauthentication on return, entering Kids Mode before sign-in finishes, selecting another Google account, offline first login, existing backup read-before-write, fresh-phone restore with new local PINs, additional profile PIN reassignment, failed durable restore, backup size limits, and account deletion. These native/live Google tests remain pending.

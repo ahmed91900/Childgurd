@@ -25,11 +25,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel('com.kidsafe.launcher/device');
   late AccessService access;
+  final deviceCalls = <MethodCall>[];
 
   setUp(() async {
+    deviceCalls.clear();
     access = AccessService(MemoryVault(), FakeHasher());
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
+          deviceCalls.add(call);
           switch (call.method) {
             case 'status':
               return {
@@ -103,14 +106,12 @@ void main() {
     await tester.tap(find.text('Set up this phone'));
     await tester.pumpAndSettle();
     final fields = find.byType(TextField);
-    for (var i = 0; i < 5; i++) {
-      await tester.enterText(
-        fields.at(i),
-        ['1020', '729384', '729384', '458291', '458291'][i],
-      );
+    expect(fields, findsNWidgets(2));
+    for (var i = 0; i < 2; i++) {
+      await tester.enterText(fields.at(i), ['729384', '458291'][i]);
     }
-    await tester.ensureVisible(find.text('Save private PINs'));
-    await tester.tap(find.text('Save private PINs'));
+    await tester.ensureVisible(find.text('Save PINs'));
+    await tester.tap(find.text('Save PINs'));
     await tester.pumpAndSettle();
     expect(access.configured, true);
     expect(find.text('Prepare this Android phone'), findsOneWidget);
@@ -123,6 +124,7 @@ void main() {
     await configured();
     await mount(tester);
     await enter(tester, '458291');
+    expect(deviceCalls.any((call) => call.method == 'enterKidMode'), true);
     expect(find.text('Today’s Tasks'), findsOneWidget);
     expect(find.text('Calculator'), findsNothing);
     await tester.ensureVisible(find.text('Parent access'));
@@ -143,7 +145,7 @@ void main() {
     await enter(tester, '729384');
     await tester.tap(find.text('Change PINs'));
     await tester.pumpAndSettle();
-    expect(find.text('Make it yours'), findsOneWidget);
+    expect(find.text('Set your PINs'), findsOneWidget);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -152,7 +154,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('Make it yours'), findsNothing);
+    expect(find.text('Set your PINs'), findsNothing);
     expect(find.text('Unlock'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
@@ -195,6 +197,64 @@ void main() {
       expect(find.text('Unlock'), findsOneWidget);
       expect(find.text('Calculator'), findsNothing);
       expect(find.text('Parent space'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'changing PINs keeps two choices and separately verifies the current parent',
+    (tester) async {
+      await configured();
+      await mount(tester);
+      await enter(tester, '729384');
+      await tester.tap(find.text('Change PINs'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNWidgets(2));
+      await tester.enterText(find.byType(TextField).at(0), '889922');
+      await tester.enterText(find.byType(TextField).at(1), '663377');
+      await tester.tap(find.text('Save PINs'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Enter your current Parent PIN'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), '458291');
+      await tester.tap(find.text('Save PINs'));
+      await tester.pumpAndSettle();
+      expect(find.text('Incorrect PIN. Try again.'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), '729384');
+      await tester.tap(find.text('Save PINs'));
+      await tester.pumpAndSettle();
+      expect(find.text('Prepare this Android phone'), findsOneWidget);
+      expect(await access.unlock('889922'), PhoneMode.parent);
+      expect(await access.unlock('663377'), PhoneMode.kid);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'two-field setup fits a small phone and allows checking a typed PIN',
+    (tester) async {
+      await mount(tester);
+      tester.view.physicalSize = const Size(360, 800);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byType(CheckboxListTile));
+      await tester.tap(find.byType(CheckboxListTile));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Set up this phone'));
+      await tester.tap(find.text('Set up this phone'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNWidgets(2));
+      expect(find.text('Parent PIN'), findsOneWidget);
+      expect(find.text('Kids PIN'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).obscureText,
+        true,
+      );
+      await tester.tap(find.byTooltip('Show PIN').first);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).obscureText,
+        false,
+      );
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
   );

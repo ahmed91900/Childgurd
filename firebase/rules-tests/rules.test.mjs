@@ -100,3 +100,26 @@ test('pairing secrets, token collections and owner roles are never client-readab
     await assertFails(setDoc(doc(parent(),path),{active:true,owner:true}));
   }
 });
+
+test('Google parent can save and recover a private learning backup',async()=>{
+  const google=env.authenticatedContext('parentA',{email_verified:true,firebase:{sign_in_provider:'google.com'}}).firestore();
+  const ref=doc(google,'families/parentA/backups/latest');
+  await assertSucceeds(setDoc(ref,{schema:1,payload:'{"version":1}',updatedAt:serverTimestamp()}));
+  await assertSucceeds(getDoc(ref));
+});
+test('child, unauthenticated client and another family cannot access backups',async()=>{
+  const ref='families/parentA/backups/latest';
+  await assertSucceeds(setDoc(doc(parent(),ref),{schema:1,payload:'{}',updatedAt:serverTimestamp()}));
+  const another=env.authenticatedContext('parentB',claims).firestore();
+  for(const db of [device(),env.unauthenticatedContext().firestore(),another]){
+    await assertFails(getDoc(doc(db,ref)));
+    await assertFails(setDoc(doc(db,ref),{schema:1,payload:'{}',updatedAt:serverTimestamp()}));
+  }
+});
+test('backup rejects unexpected fields, schema, type and oversized payload',async()=>{
+  const ref=doc(parent(),'families/parentA/backups/latest');
+  for(const extra of [{schema:99},{payload:123},{payload:'a'.repeat(900001)},{role:'owner'},{updatedAt:0}]){
+    await assertFails(setDoc(ref,{schema:1,payload:'{}',updatedAt:serverTimestamp(),...extra}));
+  }
+  await assertFails(setDoc(doc(parent(),'families/parentA/backups/arbitrary'),{schema:1,payload:'{}',updatedAt:serverTimestamp()}));
+});
