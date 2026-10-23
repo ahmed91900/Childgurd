@@ -36,6 +36,13 @@ def main():
     badging = subprocess.check_output(
         [str(build_tools / "aapt"), "dump", "badging", str(args.apk)], text=True
     )
+    manifest = subprocess.check_output(
+        [str(build_tools / "aapt"), "dump", "xmltree", str(args.apk), "AndroidManifest.xml"], text=True
+    )
+    ad_meta = next((block for block in manifest.split("E: meta-data")
+                    if "com.google.android.gms.ads.APPLICATION_ID" in block), "")
+    if not re.search(r'android:value[^\n]*="ca-app-pub-\d+~\d+"', ad_meta):
+        raise SystemExit("Missing/invalid ads SDK application ID, including in ads-disabled builds")
     minimum = re.search(r"^sdkVersion:'(\d+)'", badging, re.MULTILINE)
     if minimum is None or int(minimum[1]) != 24:
         raise SystemExit("Universal beta must retain minimum Android API 24")

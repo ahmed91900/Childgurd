@@ -29,7 +29,7 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["admobAppId"] = dartDefines["ADMOB_APP_ID"]
+        manifestPlaceholders["admobAppId"] = dartDefines["ADMOB_APP_ID"]?.takeIf { it.isNotBlank() }
             ?: "ca-app-pub-3940256099942544~3347511713"
         if (firebaseValues != null) {
             mapOf("appId" to "google_app_id", "messagingSenderId" to "gcm_defaultSenderId",

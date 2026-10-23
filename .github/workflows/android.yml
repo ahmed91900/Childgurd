@@ -20,7 +20,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test --reporter expanded
-      - run: flutter build apk --debug --target-platform android-arm,android-arm64,android-x64
+      - run: flutter build apk --debug --target-platform android-arm,android-arm64,android-x64 --dart-define=ADMOB_APP_ID=
       - run: python3 tool/verify_apk.py build/app/outputs/flutter-apk/app-debug.apk
       - run: ./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm,android-arm64,android-x64
       - uses: actions/upload-artifact@v4

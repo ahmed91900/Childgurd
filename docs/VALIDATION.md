@@ -52,3 +52,5 @@ Workspace validation passed for v0.2.2: 51 Flutter tests, no Dart analysis findi
 30 backend tests pass, including verified Google-provider backup access, child/cross-family denial, schema/type/size checks, and an actual emulated Google credential signing in, registering a parent, saving/recovering a private backup and deleting the family/backup. Emulator fake Google tokens never contact production. This does not exercise the real Android Google account chooser.
 
 Dart analysis has no issues. The universal API-24 APK, ELF/signature verification and Android lint succeeded locally. Firebase/Google public configuration is absent in the released offline beta. Google sign-in, live backup/recovery, account selection cancellation, OAuth/signing configuration and OEM behavior need real devices and a test Firebase project before production claims.
+
+An explicitly empty `ADMOB_APP_ID` was built and inspected successfully. Gradle now treats blank/omitted IDs alike, retaining the official test application ID required by the ads SDK while live ads remain disabled. The packaging gate checks the actual merged manifest ID; CI builds this blank-ID case as a regression check.
