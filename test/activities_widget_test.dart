@@ -129,4 +129,43 @@ void main() {
     expect(stored!.length, 3);
     expect(stored!.every((stroke) => stroke.length >= 2), true);
   });
+  for (final pair in [
+    ['৫', '5'],
+    ['৫', '৫'],
+    ['۵', '٥'],
+  ]) {
+    testWidgets('custom numeric answer ${pair[0]} accepts input ${pair[1]}', (
+      tester,
+    ) async {
+      var completions = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Activity(
+                task: LearningTask(
+                  id: 'custom:sum',
+                  kind: 'custom',
+                  prompt: '2 + 3 = ?',
+                  answer: pair[0],
+                ),
+                child: ChildProfile(id: 'child'),
+                onComplete: (_) async {
+                  completions++;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), '4');
+      await tester.tap(find.text('Check answer'));
+      await tester.pumpAndSettle();
+      expect(completions, 0);
+      await tester.enterText(find.byType(TextField), pair[1]);
+      await tester.tap(find.text('Check answer'));
+      await tester.pumpAndSettle();
+      expect(completions, 1);
+    });
+  }
 }

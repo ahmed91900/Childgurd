@@ -2,7 +2,7 @@
 
 ## Download and installation
 
-Download `KidSafe-Launcher-arm64-beta.apk` from [GitHub Releases](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.0-beta.1). Android 8.0+ and ARM64 are required. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
+Download `KidSafe-Launcher-arm64-beta.apk` from [GitHub Releases](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1). Android 8.0+ and ARM64 are required. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
 
 Open the APK from Downloads. Android may ask you to allow installation from the browser/file manager. That grant only allows installation; it is separate from KidSafe's permissions. Do not disable Play Protect. Keep an alternative launcher available during testing.
 

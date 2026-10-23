@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/assets/kidsafe-banner.svg" alt="KidSafe Launcher — a thoughtful start for family screen time" width="100%" /></p>
 <p align="center"><strong>An offline learning space with a private parent dashboard.</strong><br />Flutter · Kotlin · English · বাংলা · العربية</p>
-<p align="center"><a href="https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.0-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
+<p align="center"><a href="https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
 
 ## Learn, play, and grow together
 
@@ -29,7 +29,7 @@ Audio needs an installed **offline** voice for the chosen language. The app expl
 
 ## Install and try it
 
-1. Open the [beta release](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.0-beta.1) on an ARM64 Android phone and download `KidSafe-Launcher-arm64-beta.apk` from **Assets**.
+1. Open the [beta release](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1) on an ARM64 Android phone and download `KidSafe-Launcher-arm64-beta.apk` from **Assets**.
 2. Open the downloaded APK and allow installation from that source when Android asks. Read the beta limitations before enabling launcher permissions.
 3. Choose English or বাংলা, read parental consent/privacy, use initial parent PIN **1020**, and replace **both** default PINs. The initial child PIN **0000** cannot remain in use.
 4. Follow the permission guide. Enter the new parent PIN when returning from Android settings.
@@ -64,7 +64,7 @@ lib/features/cloud/         Scoped Firebase sync, parent pairing and owner ads
 lib/l10n/                   English, Bangla and Arabic
 android/                    Kotlin vaults, launcher boundary, offline TTS and Accessibility
 firebase/                   Firestore/Storage rules, trusted functions and 26 emulator tests
-test/                       48 Flutter unit/widget tests
+test/                       51 Flutter unit/widget tests
 ```
 
 ## Honest protection boundaries

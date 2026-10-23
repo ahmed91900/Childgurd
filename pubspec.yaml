@@ -1,7 +1,7 @@
 name: kidsafe_launcher
 description: A parent-controlled Android home launcher. Phase 1 foundation.
 publish_to: none
-version: 0.2.0+2
+version: 0.2.1+3
 environment:
   sdk: '>=3.9.0 <4.0.0'
 dependencies:

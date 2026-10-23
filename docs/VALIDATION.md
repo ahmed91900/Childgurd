@@ -6,10 +6,10 @@ Results from this cloud workspace. These are not phone/OEM tests or a claim that
 | --- | --- |
 | Dart format | 25 files, zero changes needed |
 | Flutter analysis | No issues found |
-| Flutter unit/widget suite | **48 passed** |
+| Flutter unit/widget suite | **51 passed** |
 | Firebase emulator suite | **26 passed**: 14 Firestore rules, 8 callable integrations, 4 Storage rules |
 | Backend production dependency audit | Zero reported vulnerabilities with pinned firebase-admin 14.5.0 / firebase-functions 7.4.0 at this check |
-| ARM64 Android build | Debug APK built successfully, version 0.2.0 / code 2 |
+| ARM64 Android build | Debug APK built successfully, version 0.2.1 / code 3 |
 | Android app lint | BUILD SUCCESSFUL; zero errors, eight advisory warnings (synchronous SharedPreferences writes and KTX style) |
 | APK signature | apksigner verified APK v2 signature; Android Debug certificate |
 | Package/platform | com.kidsafe.launcher; min API 26, compile/target API 36; arm64-v8a |
@@ -36,3 +36,5 @@ No physical phone, emulator UI or /dev/kvm was available. The [device matrix](DE
 The public beta is debug signed and contains no production Firebase project or AdMob application ID. Offline learning/local controls are available; separate-phone sync and owner ad controls require the operator's configured build and deployed backend. There is no Play submission, Store policy approval, legal certification or production-protection guarantee. Use only under parent supervision with non-sensitive test data.
 
 See [Firebase setup](FIREBASE_SETUP.md), [security boundaries](SECURITY.md) and [Play release checklist](PLAY_RELEASE_CHECKLIST.md). The separate Phase 1 report is historical evidence, not the current feature list.
+
+The v0.2.1 patch normalizes both a guardian's custom answer and the child's entry, including Bangla/Arabic/Persian numerals. Three regression cases reject a wrong answer and accept the matching value across scripts.

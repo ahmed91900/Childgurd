@@ -4,6 +4,19 @@ import 'package:flutter/material.dart';
 import '../../../l10n/strings.dart';
 import '../../family/domain/family.dart';
 
+// Apply the same normalization to guardian-authored answers and child input.
+String _normalizeAnswer(String value) => value
+    .replaceAllMapped(RegExp('[০-৯٠-٩۰-۹]'), (m) {
+      final n = m[0]!.codeUnitAt(0);
+      return '${n >= 0x9e6
+          ? n - 0x9e6
+          : n >= 0x6f0
+          ? n - 0x6f0
+          : n - 0x660}';
+    })
+    .trim()
+    .toLowerCase();
+
 class Activity extends StatefulWidget {
   const Activity({
     super.key,
@@ -295,14 +308,10 @@ class _ActivityState extends State<Activity> {
               onPressed: _saving
                   ? null
                   : () {
-                      final normalized = _answer.text
-                          .replaceAllMapped(RegExp('[০-৯٠-٩]'), (m) {
-                            final n = m[0]!.codeUnitAt(0);
-                            return '${n >= 0x9e6 ? n - 0x9e6 : n - 0x660}';
-                          })
-                          .trim()
-                          .toLowerCase();
-                      _finish(normalized == expected.trim().toLowerCase());
+                      _finish(
+                        _normalizeAnswer(_answer.text) ==
+                            _normalizeAnswer(expected),
+                      );
                     },
               child: Text(s['submit']),
             ),
