@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Phase 1 has no cloud clients. Replace only alongside tested family rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

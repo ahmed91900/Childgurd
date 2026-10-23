@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">KidSafe Launcher</string>
+    <string name="accessibility_description">Phase 1 setup only. This service does not read screen content or block apps. Enable only if you are the parent and understand that device restrictions are not active yet.</string>
+</resources>
