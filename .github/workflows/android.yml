@@ -46,3 +46,36 @@ jobs:
       - run: npm ci --prefix firebase/rules-tests
       - run: npm audit --omit=dev --prefix firebase/functions --audit-level=moderate
       - run: firebase/rules-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore,functions,storage --project demo-kidsafe --config firebase/firebase.json 'npm --prefix firebase/rules-tests test'
+  publish-beta:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [flutter, firebase]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: kidsafe-arm64-beta
+          path: dist
+      - name: Package complete source and checksums
+        run: |
+          mv dist/app-debug.apk dist/KidSafe-Launcher-arm64-beta.apk
+          python3 tool/export_source.py
+          cp docs/FULL_SOURCE.md dist/FULL_SOURCE.md
+          git archive HEAD --format=zip --prefix=KidSafe-Launcher/ -o dist/KidSafe-Launcher-source.zip
+          cd dist
+          sha256sum KidSafe-Launcher-arm64-beta.apk KidSafe-Launcher-source.zip FULL_SOURCE.md > SHA256SUMS
+      - name: Publish tested beta download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/KidSafe-Launcher-arm64-beta.apk dist/KidSafe-Launcher-source.zip dist/FULL_SOURCE.md dist/SHA256SUMS --clobber
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease --notes-file docs/RELEASE_NOTES.md
+          else
+            gh release create "$RELEASE_TAG" dist/KidSafe-Launcher-arm64-beta.apk dist/KidSafe-Launcher-source.zip dist/FULL_SOURCE.md dist/SHA256SUMS --target "$GITHUB_SHA" --title "KidSafe Launcher $RELEASE_TAG — English and Bangla learning" --prerelease --notes-file docs/RELEASE_NOTES.md
+          fi

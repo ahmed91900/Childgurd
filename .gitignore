@@ -24,3 +24,4 @@ firestore-debug.log
 firebase-config.json
 
 *.p12
+dist/
