@@ -50,7 +50,7 @@ Copy `firebase-config.example.json` to ignored `firebase-config.json`. Set `FIRE
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter build apk --debug --target-platform android-arm64 \
+flutter build apk --debug --target-platform android-arm,android-arm64,android-x64 \
   --dart-define-from-file=firebase-config.json
 ```
 

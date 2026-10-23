@@ -5,7 +5,7 @@ checks is claimed as passed merely because an APK builds. Use test data only.
 
 | Area | Required manual checks |
 | --- | --- |
-| OS/OEM matrix | API 26, 29, 31, 33, 35, 36; Pixel plus Samsung and at least one restrictive OEM; low-memory/low-end device |
+| OS/OEM matrix | API 24, 25, 26, 29, 31, 33, 35, 36; Pixel plus Samsung and at least one restrictive OEM; low-memory/low-end device; 32-bit ARM and 64-bit ARM phones, x86-64 emulator/tablet; devices without Google Play services |
 | Initial setup | Consent required; `1020` challenge; both defaults rejected as replacements; mismatched confirmations; Bangla/Arabic/Persian numerals; keyboard does not obscure buttons |
 | Mode routing | Correct parent/child routes; wrong PIN; child PIN rejected for exit and change; installed apps launch in parent mode only |
 | Lockout | Five failures, correct PIN denied during lockout, kill/relaunch, reboot, countdown expiry, background/foreground, clock changes and timezone changes |

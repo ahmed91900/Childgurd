@@ -22,13 +22,13 @@ flutter pub get --enforce-lockfile
 dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test --reporter expanded
-flutter build apk --debug --target-platform android-arm64
+flutter build apk --debug --target-platform android-arm,android-arm64,android-x64
 ```
 
 For native Android changes, also run:
 
 ```sh
-./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm64
+./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm,android-arm64,android-x64
 ```
 
 Describe the problem, final behavior, validation and remaining limitations in

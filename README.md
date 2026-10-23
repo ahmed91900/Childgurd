@@ -1,12 +1,12 @@
 <p align="center"><img src="docs/assets/kidsafe-banner.svg" alt="KidSafe Launcher — a thoughtful start for family screen time" width="100%" /></p>
 <p align="center"><strong>An offline learning space with a private parent dashboard.</strong><br />Flutter · Kotlin · English · বাংলা · العربية</p>
-<p align="center"><a href="https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
+<p align="center"><a href="https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1">Download Android beta</a> · <a href="docs/GETTING_STARTED.md">First-run guide</a> · <a href="docs/VALIDATION.md">Test results</a> · <a href="docs/RESEARCH.md">61-repository review</a></p>
 
 ## Learn, play, and grow together
 
 KidSafe Launcher gives children original learning activities instead of an open social-media feed. A parent PIN opens the family dashboard and the phone's app list; each child PIN opens a learning space. Local learning and same-phone parental controls work without an account or internet connection.
 
-**v0.2 is an installable development beta for supervised testing, not a Play Store production release.** The downloadable ARM64 APK runs on Android 8.0 and later. It is debug signed. Separate-phone control and owner-managed advertising are implemented in source and tested against Firebase emulators, but are **not activated in this APK**: no production Firebase project or advertising account was supplied. See [Firebase setup](docs/FIREBASE_SETUP.md).
+**v0.2 is an installable development beta for supervised testing, not a Play Store production release.** The universal APK targets Android 7.0 and later, with 32-bit ARM, 64-bit ARM and x86-64 included. It is debug signed. Separate-phone control and owner-managed advertising are implemented in source and tested against Firebase emulators, but are **not activated in this APK**: no production Firebase project or advertising account was supplied. See [Firebase setup](docs/FIREBASE_SETUP.md).
 
 ## What's inside
 
@@ -29,7 +29,7 @@ Audio needs an installed **offline** voice for the chosen language. The app expl
 
 ## Install and try it
 
-1. Open the [beta release](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1) on an ARM64 Android phone and download `KidSafe-Launcher-arm64-beta.apk` from **Assets**.
+1. Open the [beta release](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1) on an Android 7.0+ phone and download `KidSafe-Launcher-universal-beta.apk` from **Assets**.
 2. Open the downloaded APK and allow installation from that source when Android asks. Read the beta limitations before enabling launcher permissions.
 3. Choose English or বাংলা, read parental consent/privacy, use initial parent PIN **1020**, and replace **both** default PINs. The initial child PIN **0000** cannot remain in use.
 4. Follow the permission guide. Enter the new parent PIN when returning from Android settings.
@@ -39,15 +39,16 @@ No ADB, Device Owner enrollment, Firebase account or ads are required for this o
 
 ## Build and verify
 
-Flutter **3.35.7**, JDK **21**, Android SDK **36**, min SDK **26**, Node **22** for backend tests.
+Flutter **3.35.7**, JDK **21**, Android SDK **36**, min SDK **24**, Node **22** for backend tests.
 
 ```sh
 flutter pub get --enforce-lockfile
 dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test --reporter expanded
-flutter build apk --debug --target-platform android-arm64
-./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm64
+flutter build apk --debug --target-platform android-arm,android-arm64,android-x64
+python3 tool/verify_apk.py build/app/outputs/flutter-apk/app-debug.apk
+./android/gradlew -p android :app:lintDebug -Ptarget-platform=android-arm,android-arm64,android-x64
 ```
 
 Backend setup, emulator commands and production build configuration: [Firebase guide](docs/FIREBASE_SETUP.md). Complete file contents are downloadable as `FULL_SOURCE.md` and a source ZIP in the release; regenerate with `python3 tool/export_source.py`.
@@ -74,3 +75,14 @@ Accessibility tries to return Home when an unapproved app opens. It cannot guara
 Read [security/privacy boundaries](docs/SECURITY.md), [physical-device tests](docs/DEVICE_TESTS.md), [release checklist](docs/PLAY_RELEASE_CHECKLIST.md), [research and licenses](docs/RESEARCH.md), and [remaining release work](docs/ROADMAP.md).
 
 Built by [Mohammed Alamin](https://github.com/extramail9922-alt).
+
+## Phone compatibility
+
+| Device | Compatibility target |
+| --- | --- |
+| Android 7.0+ with 32-bit ARM, 64-bit ARM or x86-64 | Included in the universal APK; physical-device testing remains required |
+| Android 6 and earlier, or 32-bit x86 | Unsupported by the current plugin/Flutter combination |
+| iPhone/iPad | APKs cannot install; iOS does not support this Android launcher/Accessibility model |
+| Android devices without Google Play services | Offline lessons are designed to work independently; cloud push/Google ads require compatible services and device testing |
+
+This is broader packaging support, not a claim that every phone has been tested. Some manufacturers restrict Home selection, Accessibility, Device Admin, background execution or offline voice installation. The universal APK is larger because it contains three CPU architectures.

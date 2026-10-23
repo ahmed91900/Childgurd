@@ -52,6 +52,5 @@ python3 tool/configure_proxy.py
 printf '%s  %s\n' 2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046 \
   android/gradle/wrapper/gradle-wrapper.jar | sha256sum --check
 flutter pub get --enforce-lockfile
-# Build only the supported representative target; Flutter fetches its required
-# artifacts without precaching unrelated internal engine-development targets.
-flutter build apk --debug --target-platform android-arm64
+# Package all three supported Android CPU architectures in one APK.
+flutter build apk --debug --target-platform android-arm,android-arm64,android-x64

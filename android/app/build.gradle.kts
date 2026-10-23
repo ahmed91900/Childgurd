@@ -24,7 +24,8 @@ android {
     kotlinOptions { jvmTarget = "17" }
     defaultConfig {
         applicationId = "com.kidsafe.launcher"
-        minSdk = 26
+        // The video-player plugin requires API 24; preserve its supported floor.
+        minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName

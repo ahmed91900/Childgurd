@@ -1,7 +1,7 @@
-KidSafe Launcher v0.2.1 beta brings offline English/Bangla learning and same-phone family controls to Android 8.0+ ARM64 phones.
+KidSafe Launcher v0.2.2 beta brings offline English/Bangla learning and same-phone family controls to Android 7.0+ phones with 32-bit ARM, 64-bit ARM or x86-64 CPUs.
 
 ### Download
-Choose **KidSafe-Launcher-arm64-beta.apk** below. Open it on your Android phone; Android may ask permission to install from your browser/file manager. Initial parent PIN: **1020**. Both default PINs must be changed during setup. This is a **debug-signed development beta for supervised testing**, not a Play Store release.
+Choose **KidSafe-Launcher-universal-beta.apk** below. Open it on your Android phone; Android may ask permission to install from your browser/file manager. Initial parent PIN: **1020**. Both default PINs must be changed during setup. This is a **debug-signed development beta for supervised testing**, not a Play Store release.
 
 ### Included
 - Nine learning activity types: math, reading, memory, number patterns, drawing, vocabulary, spelling, counting and shapes.
@@ -23,3 +23,8 @@ Accessibility redirection is best effort. Android system settings, recents, noti
 
 ### v0.2.1 fix
 Guardian-authored numeric answers and child input now use the same Bangla/Arabic/Persian digit normalization. Three regression tests cover cross-script custom answers. This beta is signed with the CI build's debug key; a differently signed previous build must be uninstalled before installing. Uninstalling erases its local data.
+
+### Broader Android compatibility
+One universal APK now includes armeabi-v7a, arm64-v8a and x86_64. The minimum Android version is lowered from 8.0 to 7.0 (API 24, required by the video-player plugin). Packaging verification checks each Flutter engine's ELF architecture, the actual minimum SDK, ZIP integrity and APK signature.
+
+This does not support iPhones/iPads, Android 6 or earlier, 32-bit x86, or operating systems that cannot install Android APKs. Phone-brand permissions, offline voices, video decoders and background behavior still need real-device testing. The APK is larger because it includes three architectures. On devices without Google Play services, cloud push and Google ads may be unavailable.

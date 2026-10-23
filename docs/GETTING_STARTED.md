@@ -2,7 +2,7 @@
 
 ## Download and installation
 
-Download `KidSafe-Launcher-arm64-beta.apk` from [GitHub Releases](https://github.com/extramail9922-alt/Childgurd/releases/tag/v0.2.1-beta.1). Android 8.0+ and ARM64 are required. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
+Download `KidSafe-Launcher-universal-beta.apk` from [GitHub Releases](https://github.com/ahmed91900/Childgurd/releases/tag/v0.2.2-beta.1). Android 7.0+ is required. The universal APK includes armeabi-v7a, arm64-v8a and x86_64. Compare the APK SHA-256 with the release's `SHA256SUMS` if desired. This is a debug-signed beta; it will not upgrade a differently signed installation. Back up any data you need before uninstalling another build. Local encrypted data cannot be recovered after uninstall/data clearing.
 
 Open the APK from Downloads. Android may ask you to allow installation from the browser/file manager. That grant only allows installation; it is separate from KidSafe's permissions. Do not disable Play Protect. Keep an alternative launcher available during testing.
 
@@ -52,3 +52,7 @@ To stop testing, enter parent mode, choose another Home launcher in Android sett
 ## Local development
 
 Install Flutter 3.35.7, JDK 21 and Android SDK platform 36, build-tools 35.0.0, platform-tools, NDK 27.0.12077973 and CMake 3.22.1. Accept Android SDK licenses through the official SDK tools. Run the build/check commands in the repository README. `tool/cloud-env.sh` contains paths for this workspace only; use your own SDK/JDK locations elsewhere. Release signing must be configured privately before Store distribution.
+
+## Compatibility
+
+Use the universal APK so Android can select the matching native code for armeabi-v7a (32-bit ARM), arm64-v8a or x86_64. The minimum is Android 7.0 / API 24, matching the video-player plugin. Android 6 and earlier and 32-bit x86 are unsupported. iOS cannot install APKs or use this Android launcher model. A compatible architecture/version does not guarantee an OEM permits every parental-control feature. Offline voices, video decoding and permissions need device testing, especially older/low-memory phones.

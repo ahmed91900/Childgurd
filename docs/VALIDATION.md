@@ -9,10 +9,10 @@ Results from this cloud workspace. These are not phone/OEM tests or a claim that
 | Flutter unit/widget suite | **51 passed** |
 | Firebase emulator suite | **26 passed**: 14 Firestore rules, 8 callable integrations, 4 Storage rules |
 | Backend production dependency audit | Zero reported vulnerabilities with pinned firebase-admin 14.5.0 / firebase-functions 7.4.0 at this check |
-| ARM64 Android build | Debug APK built successfully, version 0.2.1 / code 3 |
+| Universal Android build | Debug APK built successfully, version 0.2.2 / code 4; three CPU architectures included |
 | Android app lint | BUILD SUCCESSFUL; zero errors, eight advisory warnings (synchronous SharedPreferences writes and KTX style) |
 | APK signature | apksigner verified APK v2 signature; Android Debug certificate |
-| Package/platform | com.kidsafe.launcher; min API 26, compile/target API 36; arm64-v8a |
+| Package/platform | com.kidsafe.launcher; min API 24, compile/target API 36; armeabi-v7a, arm64-v8a and x86_64 |
 | Source whitespace | git diff --check passed |
 
 ## Covered behavior
@@ -38,3 +38,9 @@ The public beta is debug signed and contains no production Firebase project or A
 See [Firebase setup](FIREBASE_SETUP.md), [security boundaries](SECURITY.md) and [Play release checklist](PLAY_RELEASE_CHECKLIST.md). The separate Phase 1 report is historical evidence, not the current feature list.
 
 The v0.2.1 patch normalizes both a guardian's custom answer and the child's entry, including Bangla/Arabic/Persian numerals. Three regression cases reject a wrong answer and accept the matching value across scripts.
+
+## v0.2.2 compatibility expansion
+
+The compatibility target is now Android 7.0+ on ARM32, ARM64 and x86-64. Android 6 and earlier are excluded by the current video-player plugin. iOS cannot run this Android APK/launcher model. `tool/verify_apk.py` checks the actual packaged ELF engines, minimum SDK, ZIP integrity and APK signature; packaging validation is distinct from executing the app on each architecture. No Android 7 phone, 32-bit device or x86-64 emulator has been runtime tested in this workspace.
+
+Workspace validation passed for v0.2.2: 51 Flutter tests, no Dart analysis findings, a universal Android build, signature verification and Android lint (zero errors/eight existing preference/style advisories). The packaging gate accepted all three correct ELF engines and API 24, and rejected the earlier ARM64-only APK. The 26 backend tests above are prior results for unchanged backend code; tagged CI reruns them before publication.
